@@ -10,3 +10,13 @@ class Types:
     @staticmethod
     def convert_input_to_type(desc: str) -> int:
         return Types.GUESS
+
+    @staticmethod
+    def is_tiled(t: int) -> bool:
+        return t == TILES_ROTATED or t == TILES_SCRAMBLED or t == TILES_SHUFFLED
+    
+    @staticmethod
+    def is_jigsaw(t: int) -> bool:
+        return t == JIGSAW_ROTATED or t == JIGSAW_SCRAMBLED or t == JIGSAW_SHUFFLED
+    
+    
