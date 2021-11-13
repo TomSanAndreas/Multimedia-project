@@ -13,10 +13,10 @@ class Types:
 
     @staticmethod
     def is_tiled(t: int) -> bool:
-        return t == TILES_ROTATED or t == TILES_SCRAMBLED or t == TILES_SHUFFLED
+        return t == Types.TILES_ROTATED or t == Types.TILES_SCRAMBLED or t == Types.TILES_SHUFFLED
     
     @staticmethod
     def is_jigsaw(t: int) -> bool:
-        return t == JIGSAW_ROTATED or t == JIGSAW_SCRAMBLED or t == JIGSAW_SHUFFLED
+        return t == Types.JIGSAW_ROTATED or t == Types.JIGSAW_SCRAMBLED or t == Types.JIGSAW_SHUFFLED
     
     

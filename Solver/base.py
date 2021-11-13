@@ -11,6 +11,7 @@ class Solver(threading.Thread):
         super(Solver, self).__init__()
         self.puzzle_type = puzzle_type
         self.board = Board.create_board(source_image, puzzle_type)
+        self.board.show()
     def solve(self):
         self.start()
     def run(self):
