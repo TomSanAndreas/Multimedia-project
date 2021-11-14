@@ -4,9 +4,6 @@ from matplotlib import pyplot as plt
 from os.path import isfile
 import cv2
 
-# algemene constantes
-laplace_filter = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
-
 # algemene functies
 def get_image_path(name: str) -> str:
     """
@@ -47,8 +44,24 @@ def show_image(image: np.ndarray):
     plt.axis("off")
     plt.show()
 
-def create_edge_image(image: np.ndarray):
+def calc_edge_score(edge: np.ndarray) -> float:
     """
-    Creeert een edgebeeld via een sobelmasker
+    Berekent een score tussen 0.0 (totaal geen edge) en
+    1.0 (meest optimale edge) afhankelijk van de inhoud
+    van de edge zelf.
+    edge heeft dimensie (L, W) waarvan
+        L: de lengte van de edge is,
+        W: de dikte van de pixels van de edge is
+        (voorbeeld: 256 x 3 voor een 256 pixel edge met
+        3 pixels)
     """
-    return cv2.filter2D(image, -1, laplace_filter)
+    index = 0
+    line_length = 1
+    max_line_length = 1
+    while index + line_length < len(edge):
+        while index + line_length < len(edge) and (edge[index:index + line_length + 1] == 255).any(axis = 1).all():
+            line_length += 1
+        index += line_length + 1
+        max_line_length = max(max_line_length, line_length)
+        line_length = 1
+    return max_line_length / len(edge)
