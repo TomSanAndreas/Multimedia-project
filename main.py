@@ -18,7 +18,7 @@ if __name__ == "__main__":
         print("Bestand werd niet gevonden!")
     else:
         # TODO tijdelijk worden enkel TILES_ROTATED puzzels opgelost
-        type_puzzle = Types.TILES_ROTATED
+        type_puzzle = get_file_info_by_name(filename)
         src_image = cv2.imread(filename)
         solver = Solver(src_image, type_puzzle)
         solver.solve()

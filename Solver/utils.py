@@ -4,6 +4,9 @@ from matplotlib import pyplot as plt
 from os.path import isfile
 import cv2
 
+# Eigen imports
+from Solver.types import *
+
 # algemene functies
 def get_image_path(name: str) -> str:
     """
@@ -65,3 +68,27 @@ def calc_edge_score(edge: np.ndarray) -> float:
         max_line_length = max(max_line_length, line_length)
         line_length = 1
     return max_line_length / len(edge)
+
+def get_file_info_by_name(filename: str) -> tuple[int, tuple[int, int]]:
+    """
+    Filename heeft de vorm tiletype_XxY_index.png
+    """
+    fileprops = filename.lower().split('/')[-1].split('_')
+    tiledesc = fileprops[0:2]
+    # moet altijd 1 cijfer zijn bij 1 cijfer
+    tiledims = int(fileprops[2][0]), int(fileprops[2][2])
+    if tiledesc[0] == "jigsaw":
+        tiletype = 0
+    elif tiledesc[0] == "tiles":
+        tiletype = 3
+    else:
+        raise RuntimeError("Invalid filename detected! (1)")
+    if tiledesc[1] == "rotated":
+        tiletype += 1
+    elif tiledesc[1] == "scrambled":
+        tiletype += 2
+    elif tiledesc[1] == "shuffled":
+        tiletype += 3
+    else:
+        raise RuntimeError("Invalid filename detected! (2)")
+    return tiletype, tiledims

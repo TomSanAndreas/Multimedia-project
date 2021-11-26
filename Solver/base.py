@@ -7,10 +7,10 @@ from Solver.board import Board
 from Solver.utils import *
 
 class Solver(threading.Thread):
-    def __init__(self, source_image, puzzle_type: int = Types.GUESS):
+    def __init__(self, source_image, puzzle_properties: tuple[int, tuple[int, int]] = None):
         super(Solver, self).__init__()
-        self.puzzle_type = puzzle_type
-        self.board = Board.create_board(source_image, puzzle_type)
+        self.puzzle_type = puzzle_properties[0]
+        self.board = Board.create_board(source_image, self.puzzle_type, puzzle_properties[1])
         self.board.solve()
         result = self.board.create_image()
         show_image(result)

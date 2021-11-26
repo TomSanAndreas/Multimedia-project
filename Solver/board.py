@@ -49,7 +49,7 @@ class Board:
             for j in set(range(len(self.pieces))) - {i}:
                 matches = self.pieces[i].match_all(self.pieces[j])
                 # enkel maxima overhouden, zodat er makkelijker gekeken kan worden naar het aantal buren
-                current_score = {x: max([(matches[y][x], j, y) for y in matches], key=lambda z: z[0]) for x in positions}
+                current_score = {x: max([[matches[y][x], j, y] for y in matches], key=lambda z: z[0]) for x in positions}
                 scores[-1] = {x: max((scores[y][x], current_score[x]), key=lambda x: x[0]) for y in range(len(scores)) for x in positions}
         # scores is nu een lijst die voor elk stuk de beste scores
         # bevat, de index van het stuk die daar het best past en
@@ -73,33 +73,73 @@ class Board:
         # 3 respectievelijk 2, waarvan stuk 3 niet meer moet gedraaid
         # worden, en stuk 2 180° moet gedraaid worden.
 
+        # Iets grotere (tijdelijke) array gebruiken die de resulterende
+        # indices bevat (met oneven assen zodat er een middelste startpunt
+        # is).
+        # TODO: alle ints van waarde -1 (= unused) nemen als initiele
+        # waarde, zodat er kan gecontrolleerd worden op gebruikte
+        # posities
+        resulting_indices = np.zeros((self.shape[0] + 1 + self.shape[0] % 2, self.shape[1] + 1 + self.shape[1] % 2), dtype=np.int)
 
-        # if n_horizontal == 1:
-        #     # er wordt maar 1 horizontale buur gezocht voor eender welk
-        #     # stuk, dus op basis van de scores kan deze eenvoudig gekozen
-        #     # worden (zolang er geen conflichten voorkomen)
-        #     pass
-        # else:
-        #     # eerst een hoekpunt zoeken
-        #     # TODO
-        #     raise NotImplementedError()
-        # if n_vertical == 1:
-        #     # idem voor verticale buren
-        #     pass
-        # else:
-        #     # eerst een hoekpunt zoeken
-        #     # TODO
-        #     raise NotImplementedError()
+        # rolling gebruiken om buren toe te voegen indien nodig
+        # resulting_indices[0,:] = 1
+        # resulting_indices = np.roll(resulting_indices, 1, axis=0)
+        # print(resulting_indices)
 
-        # Alle mogelijke linken maken, waarbij enkel de sterkste overblijven
-        for i, score in enumerate(scores):
-            for j, pos in enumerate(positions):
-                self.pieces[i].add(self.pieces[score[pos][1]], score[pos][0], j)
-        # Zwakste linken wegfilteren zodanig dat er voldoende stukken zijn
-        # die als randen/hoeken kunnen worden herkend
-        # TODO
-        for piece in self.pieces:
-            print([r[1] != None for r in piece.relations])
+        # Middelste index van resulting_indices is positie 0
+        # (zeroe() werd gebruikt, dus moet niet meer manueel worden geplaatst)
+        # resulting_indices[(self.shape[0] + 1) // 2, (self.shape[0] + 1) // 2] = 0
+        
+        current_piece_index = 0
+        current_pos_index = [(self.shape[1] + 1) // 2, (self.shape[0] + 1) // 2]
+
+        print(scores)
+        # TODO: usable pieces updaten per stuk dat wordt toegevoegd in
+        # de puzzel, zodanig dat een stuk niet meermaals wordt gebruikt
+        # en eventueel hier terug in toevoegen indien een bestaand
+        # stuk wordt overschreven
+        usable_pieces = {i for i in range(self.shape[0] * self.shape[1])}
+        # TODO: aantal rotaties in een totaal bijhouden, modulo 4 en zoveel
+        # keer het totaal roteren (zou minimale rotatie moeten opleveren van
+        # het totaal, wat meer kans heeft de gewenste totale rotatie te zijn)
+        for i in range(self.shape[0] * self.shape[1]):
+            # Of linker, of rechterbuur plaatsen (op basis van score) en eventueel
+            # die buur roteren
+            current_score = scores[current_piece_index]
+            if i % 2:
+                key, current_pos_index[0] = ("top", current_pos_index[0] - 1) if current_score["top"][0] > current_score["bottom"][0] else ("bottom", current_pos_index[0] + 1)
+            else:
+                key, current_pos_index[1] = ("left", current_pos_index[1] - 1) if current_score["left"][0] > current_score["right"][0] else ("right", current_pos_index[1] + 1)
+            next_piece_index = current_score[key][1]
+            resulting_indices[tuple(current_pos_index)] = next_piece_index
+            n_rotations = current_score[key][2]
+            print(current_pos_index)
+            print(n_rotations)
+            # stuk zelf, alsook de scores van dit stuk, roteren
+            for i in range(n_rotations):
+                self.pieces[next_piece_index] = self.pieces[next_piece_index].rotate()
+                temp_top = scores[next_piece_index]["left"]
+                scores[next_piece_index]["left"] = scores[next_piece_index]["bottom"]
+                scores[next_piece_index]["bottom"] = scores[next_piece_index]["right"]
+                scores[next_piece_index]["right"] = scores[next_piece_index]["top"]
+                scores[next_piece_index]["top"] = temp_top
+                for k in scores[next_piece_index]:
+                    scores[next_piece_index][k][2] = (scores[next_piece_index][k][2] + 1) % 4
+            current_piece_index = next_piece_index
+            # Of boven, of onderbuur plaatsen (op basis van score) en eventueel
+            # die buur roteren
+
+            # temp
+            if i == 2:
+                break
+
+        print(resulting_indices)
+        # resulterende indices omzetten naar de board orientatie
+        # (= de gebruikte shape eruit filteren)
+        # beide kunnen max 2 zijn
+        offset_h = int((resulting_indices[0, :] == 0).all()) + int((resulting_indices[1, :] == 0).all())
+        offset_v = int((resulting_indices[:, 0] == 0).all()) + int((resulting_indices[:, 1] == 0).all())
+        self.orientation = resulting_indices[offset_h:self.shape[0] + offset_h, offset_v:self.shape[1] + offset_v].tolist()
         return True
     
     def create_image(self) -> np.ndarray:
@@ -114,7 +154,7 @@ class Board:
         return result
 
     @staticmethod
-    def create_board(img, puzzle_type: int):
+    def create_board(img, puzzle_type: int, puzzle_dims: tuple[int, int] = None):
         # Create_Board gaat het type puzzel niet raden, dit moet
         # appart gebeuren!
         assert(puzzle_type != Types.GUESS)
@@ -166,6 +206,9 @@ class Board:
                 # met n_h en n_v de img opsplitsen in stukken en teruggeven
                 h_size = int(w / n_h)
                 v_size = int(h / n_v)
+                print(f"Gevonden dimensies: {n_h} x {n_v}")
+                h_size, v_size = w // puzzle_dims[0], h // puzzle_dims[1]
+                print(f"Gegeven dimensies: {puzzle_dims[0]} x {puzzle_dims[1]}")
                 return Board([TiledPiece(img[v_size * y:v_size * (y + 1), h_size * x:h_size * (x + 1)]) for y in range(n_v) for x in range(n_h)], (n_h, n_v))
             else:
                 # De stukken liggen verspreid op het beeld, met
@@ -178,47 +221,3 @@ class Board:
             # TODO
             raise NotImplementedError()
         return Board([], (0, 0))
-
-"""
-Oude code (backup)
---- Detecteren aantal stukken van een tiled (en niet scrambled) puzzel ---
-
-edges = cv2.Canny(img, 250, 400)
-# threshold dynamisch regelen tot het aantal gevonden lines groot genoeg is
-lines = [[], []]
-threshold = 2000
-while (len(lines[0]) < 1 or len(lines[1]) < 1) and threshold > 50:
-    threshold -= 45
-    lines = cv2.HoughLines(edges, 1, np.pi / 180, threshold, None, 0, 0)
-    lines = [] if lines is None else lines
-    # enkel lijnen met een theta = 0 en 90° zijn relevant,
-    # dus verkeerde wegfilteren
-    lines = [[line[0] for line in lines if 0 <= line[0][1] <= 0.001], [line[0] for line in lines if np.pi / 2 - 0.0005 <= line[0][1] <= np.pi / 2 + 0.0005]]
-# de lijnen in lines kunnen gebruikt worden om te weten hoeveel stukken er
-# zijn (n x m)
-# horizontaal aantal stukken bepalen
-n_h = 10
-for line in lines[0]:
-    for i in range(-1, 2):
-        n_horizontal = 1
-        ratio = (line[0] + i) / img.shape[1]
-        while n_horizontal < 10 and ratio * n_horizontal != int(ratio * n_horizontal):
-            n_horizontal += 1
-        if n_h > n_horizontal:
-            n_h = n_horizontal
-if n_h == 10:
-    raise RuntimeError("Aantal horizontale stukken werd niet correct gedetecteerd!")
-# verticaal aantal stukken bepalen
-n_v = 10
-for line in lines[1]:
-    for i in range(-1, 2):
-        n_vertical = 1
-        ratio = (line[0] + i) / img.shape[0]
-        while n_vertical < 10 and ratio * n_vertical != int(ratio * n_vertical):
-            n_vertical += 1
-        if n_v > n_vertical:
-            n_v = n_vertical
-if n_v == 10:
-    raise RuntimeError("Aantal verticale stukken werd niet correct gedetecteerd!")
-
-"""
