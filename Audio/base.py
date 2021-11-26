@@ -8,10 +8,9 @@ class Audio(threading.Thread):
         super(Audio, self).__init__()
         self.notes = notes
 
-
     def speel_af(sample, rate):
         # Ensure that highest value is in 16-bit range
-        audio = sample / np.max(np.abs(sample))
+        audio = sample/np.max(np.abs(sample))
         audio = audio * (2 ** 15 - 1)
         # Convert to 16-bit data
         audio = audio.astype(np.int16)
