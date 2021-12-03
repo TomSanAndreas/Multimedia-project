@@ -5,10 +5,12 @@ import sys
 
 """Source:  https://stackoverflow.com/questions/45613544/python-opencv-cannot-change-pixel-value-of-a-picture
             https://www.geeksforgeeks.org/python-grayscaling-of-images-using-opencv/
+    
+    functie werkt 100% bij 8/9 van de figuren. (Bij de figuren 02 herkent hij de randen maar ook de ogen van de kat)
 """
 
 # Figuur inlezen
-image = cv2.imread('Documentatie/Puzzels/Tiles_scrambled/tiles_scrambled_2x2_00.png')
+image = cv2.imread('Documentatie/Puzzels/Tiles_scrambled/tiles_scrambled_4x4_00.png')
 
 #figuur converteren naar grijswaarden
 gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -38,23 +40,27 @@ gray[notblack]=(255)
 # image[notblack]=(255,255,255)
 
 #tussenresultaat tonen
-cv2.imshow('test', gray)
+#cv2.imshow('test', gray)
 # cv2.waitKey()
 # cv2.destroyAllWindows()
 
+#Canny toepassen + randen van de tegels tekenen
 canny = cv2.Canny(gray, 130, 255, 1)
 # hough = cv2.HoughLines(canny, 1, np.pi / 180, 150, None, 0, 0)
 cnts = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 cnts = cnts[0] if len(cnts) == 2 else cnts[1]
 for c in cnts:
     cv2.drawContours(image,[c], 0, (0,255,0), 2)
+
+#Resultaat tonen
 cv2.imshow("result", image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
 
 
+
 """
-Oude code (backup)
+Oude code (backup/magweg)
 1.
 --- Detecteren aantal stukken van een tiled (en niet scrambled) puzzel ---
 edges = cv2.Canny(img, 250, 400)
