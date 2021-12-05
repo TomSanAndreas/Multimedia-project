@@ -9,10 +9,15 @@ from Solver.types import Types
 from Solver.utils import *
 
 class Board:
-    def __init__(self, pieces, shape):
+    def __init__(self, pieces: list['Piece'], shape: tuple[int, int]):
+        # alle gebruikte stukken van dit bord bijgehouden in een lijst
         self.pieces = pieces
+        # aantal stukken horizontaal, verticaal
         self.shape = shape
+        # lijst van lijsten die alle indices van het (opgeloste) bord bevatten
         self.orientation = [[y * shape[0] + x for x in range(shape[0])] for y in range(shape[1])]
+        # initiele waarde, gebruikt bij het oplossen van de puzzel
+        self.threshold = 10
 
     def show(self) -> None:
         fig = plt.figure()
@@ -30,123 +35,171 @@ class Board:
         Probeert het bord op te lossen
         Geeft True indien succesvol
         """
+        while self.threshold > 0:
+            success, result = self.try_solve()
+            if success:
+                self.orientation = result
+                print("Succes!")
+                return True
+            # TODO temp
+            self.orientation = result
+            r = self.create_image()
+            show_image(r)
+            # end temp
+            # niet succesvol, alle orientaties terugzetten, threshold
+            # verlagen en opnieuw proberen
+            self.pieces = [p.rotate_to(0) for p in self.pieces]
+            self.threshold -= 1
+            print("- ", end='')
+        # puzzel werd niet correct opgelost, toch een poging instellen
+        self.orientation = result
+        print("Failed!")
+        return False
 
+    def try_solve(self) -> tuple[bool, list[list]]:
+        """
+        "Private" functie, probeert de puzzel op te lossen met de
+        huidige parameters, geeft false terug indien niet succesvol,
+        alsook de (beste) oplossing
+        """
+        # array die alle mogelijke plaatsen bevat, groot genoeg om de puzzel
+        # in eender welke richting op te lossen
+        indices = np.zeros((self.shape[1] * 2 - 1, self.shape[0] * 2 - 1), dtype=np.int8) - 1
+        min_bounds = [0, 0]
+        max_bounds = [self.shape[1] * 2 - 2, self.shape[0] * 2 - 2]
+        # eerste stuk (index 0) plaatsen
+        indices[self.shape[1] - 1, self.shape[0] - 1] = 0
+        # bijhouden welke stukken gebruikt zijn & waar voor lookup
+        used_indices = {0: (self.shape[1] - 1, self.shape[0] - 1)}
+        unused_indices = {i for i in range(len(self.pieces))} - {0}
+        # de volgende stukken een voor een plaatsen op basis van de beste match
+        while len(unused_indices) - 1:
+            # scores herberekenen volgens de stukken die al gelegd geweest zijn
+            # en enkel rekening houdende met deze die nog gelegd moeten worden
+            scores = self.create_matching_struct(used_indices, unused_indices)
+            # zoeken naar een stuk die geplaatst kan worden op een ongebruikte plaats
+            skip = 0
+            while skip < min(len(used_indices), len(unused_indices)):
+                p_index, key, n_index, r_index = self.get_next_match_pair(scores, skip)
+                # p_index zit in used_indices, en de positie van dit stuk moet opgeschoven
+                # worden volgens key, zodat de nieuwe positie kan ingevuld worden met het
+                # nieuwe stuk
+                # print(f"Current result:\n{indices}\nCurrent index: {p_index}, current key: {key}, next index: {n_index}")
+                n_pos = move(used_indices[p_index], key, clip = True, min = min_bounds, max = max_bounds)
+                if n_pos not in used_indices.values():
+                    # geldige positie, het volgende stuk is gekend
+                    break
+                # indien deze positie al gebruikt geweest is, of deze positie is niet geldig
+                # wegens de totale lengte van het bord, wordt deze mogelijkheid overgeslagen
+                skip += 1
+            if skip == min(len(used_indices), len(unused_indices)):
+                # huidige tussenoplossing instellen
+                return False, self.clean_up_result(indices, self.shape)
+            # stuk plaatsen in puzzel en positie onthouden
+            indices[n_pos] = n_index
+            used_indices[n_index] = n_pos
+            # min_bounds en max_bounds updaten indien nodig
+            min_bounds[0] = max(min_bounds[0], n_pos[0] - self.shape[1] + 1)
+            min_bounds[1] = max(min_bounds[1], n_pos[1] - self.shape[0] + 1)
+            max_bounds[0] = min(max_bounds[0], n_pos[0] + self.shape[1] - 1)
+            max_bounds[1] = min(max_bounds[1], n_pos[1] + self.shape[0] - 1)
+            # geplaatste stuk draaien
+            self.pieces[n_index] = self.pieces[n_index].rotate_to(r_index)
+            # stuk niet meer als unused markeren
+            unused_indices -= {n_index}
+        # laatste stuk plaatsen is vrij eenvoudig: matchen met een
+        # geplaatst stuk en de orientatie zo bepalen tijdens het plaatsen
+        # eerst oplossing vereenvoudigen zodat result nu alle
+        # elementen en 1x een -1 bevat
+        result = self.clean_up_result(indices, self.shape)
+        # zoeken naar de plaats met de -1 in
+        found = False
+        for y, row in enumerate(result):
+            if found:
+                break
+            for x, el in enumerate(row):
+                if el == -1:
+                    last_pos = y, x
+                    found = True
+                    break
+        # stuk op last_pos plaatsen
+        last_piece = unused_indices.pop()
+        result[last_pos[0]][last_pos[1]] = last_piece
+        # een stuk naast last_pos gebruiken om te matchen met het enige
+        # ongebruikte stuk om te weten hoe vaak deze gedraaid moet worden
+        # horizontale buur gebruiken
+        ref_piece = result[last_pos[0]][last_pos[1] + 1] if last_pos[1] == 0 else result[last_pos[0]][last_pos[1] - 1]
+        key = "left" if last_pos[1] == 0 else "right"
+        score = self.pieces[ref_piece].match_all(self.pieces[last_piece], self.threshold)
+        n_rotations = max(score.keys(), key=lambda i: score[i][key])
+        self.pieces[last_piece] = self.pieces[last_piece].rotate_to(n_rotations)
+        return True, result
+    
+    @staticmethod
+    def clean_up_result(arr: np.ndarray, shape: tuple[int, int]) -> list:
+        """
+        "Private" helperfunctie, gebruikt om een te grote
+        numpy array om te zetten naar een compactere lijst
+        van lijsten
+        """
+        # offset_h = int((arr[0, :] == -1).all()) + int((arr[1, :] == -1).all())
+        offset_h = 0
+        while (arr[offset_h, :] == -1).all():
+            offset_h += 1
+        offset_v = 0
+        while (arr[:, offset_v] == -1).all():
+            offset_v += 1
+        # offset_v = int((arr[:, 0] == -1).all()) + int((arr[:, 1] == -1).all())
+        return arr[offset_h:shape[1] + offset_h, offset_v:shape[0] + offset_v].tolist()
 
-        # # Kijken hoeveel buren er verwacht worden a.d.h.v. de afmeting
-        # n_horizontal = 1 + int(self.shape[0] > 2)
-        # n_vertical = 1 + int(self.shape[1] > 2)
-
-
-        # zoeken van een hoekstuk door van elk stuk
-        # de vergelijking te maken met elk ander stuk
-        # en het stuk met de kleinste overeenkomsten
-        # voor 2 zijden (boven-onder/links-rechts)
-        # als hoekstuk te veronderstellen
+    def create_matching_struct(self, matched_indices: set[int], to_be_matched_indices: set[int]) -> list[dict]:
+        """
+        Creeert een struct met vorm
+        [
+            {
+                'left': [beste_match_score, beste_match_score_index, aantal_keren_index_moet_geroteerd_worden],
+                'right': [..., ..., ...],
+                'top': ...,
+                'bottom': ...
+            }, {
+                ... (dit voor elke tegel van de matched_indices, waarbij beste_match_score_index komt uit de
+                    to_be_matched_indices set)
+            }
+        ]
+        Stukken die niet in de bruikbare set vermeld staan, krijgen een match
+        van de vorm [0, None, None]
+        """
         scores = []
         positions = ["left", "right", "top", "bottom"]
         for i in range(len(self.pieces)):
             scores.append({j: [0, None, None] for j in positions})
-            for j in set(range(len(self.pieces))) - {i}:
-                matches = self.pieces[i].match_all(self.pieces[j])
-                # enkel maxima overhouden, zodat er makkelijker gekeken kan worden naar het aantal buren
-                current_score = {x: max([[matches[y][x], j, y] for y in matches], key=lambda z: z[0]) for x in positions}
-                scores[-1] = {x: max((scores[y][x], current_score[x]), key=lambda x: x[0]) for y in range(len(scores)) for x in positions}
-        # scores is nu een lijst die voor elk stuk de beste scores
-        # bevat, de index van het stuk die daar het best past en
-        # de rotatie die dat stuk moet aannemen voor deze best-
-        # passende score
-        # bijvoorbeeld:
-        # ---
-        # [
-        #     {
-        #         'left': (0.11372549019607843, 3, 0),
-        #         'right': (0.32941176470588235, 3, 0),
-        #         'top': (0.1411764705882353, 3, 2),
-        #         'bottom': (0.32941176470588235, 2, 2)
-        #     }, {
-        #         ... (dit voor elke tegel)
-        #     }
-        # ]
-        # ---
-        # Het eerste stuk hierboven heeft zo duidelijk een rechter- en
-        # onderbuur, aangezien daar een 33% match gevonden is met stuk
-        # 3 respectievelijk 2, waarvan stuk 3 niet meer moet gedraaid
-        # worden, en stuk 2 180° moet gedraaid worden.
-
-        # Iets grotere (tijdelijke) array gebruiken die de resulterende
-        # indices bevat (met oneven assen zodat er een middelste startpunt
-        # is).
-        # TODO: alle ints van waarde -1 (= unused) nemen als initiele
-        # waarde, zodat er kan gecontrolleerd worden op gebruikte
-        # posities
-        resulting_indices = np.zeros((self.shape[0] + 1 + self.shape[0] % 2, self.shape[1] + 1 + self.shape[1] % 2), dtype=np.int)
-
-        # rolling gebruiken om buren toe te voegen indien nodig
-        # resulting_indices[0,:] = 1
-        # resulting_indices = np.roll(resulting_indices, 1, axis=0)
-        # print(resulting_indices)
-
-        # Middelste index van resulting_indices is positie 0
-        # (zeroe() werd gebruikt, dus moet niet meer manueel worden geplaatst)
-        # resulting_indices[(self.shape[0] + 1) // 2, (self.shape[0] + 1) // 2] = 0
-        
-        current_piece_index = 0
-        current_pos_index = [(self.shape[1] + 1) // 2, (self.shape[0] + 1) // 2]
-
-        print(scores)
-        # TODO: usable pieces updaten per stuk dat wordt toegevoegd in
-        # de puzzel, zodanig dat een stuk niet meermaals wordt gebruikt
-        # en eventueel hier terug in toevoegen indien een bestaand
-        # stuk wordt overschreven
-        usable_pieces = {i for i in range(self.shape[0] * self.shape[1])}
-        # TODO: aantal rotaties in een totaal bijhouden, modulo 4 en zoveel
-        # keer het totaal roteren (zou minimale rotatie moeten opleveren van
-        # het totaal, wat meer kans heeft de gewenste totale rotatie te zijn)
-        for i in range(self.shape[0] * self.shape[1]):
-            # Of linker, of rechterbuur plaatsen (op basis van score) en eventueel
-            # die buur roteren
-            current_score = scores[current_piece_index]
-            if i % 2:
-                key, current_pos_index[0] = ("top", current_pos_index[0] - 1) if current_score["top"][0] > current_score["bottom"][0] else ("bottom", current_pos_index[0] + 1)
-            else:
-                key, current_pos_index[1] = ("left", current_pos_index[1] - 1) if current_score["left"][0] > current_score["right"][0] else ("right", current_pos_index[1] + 1)
-            next_piece_index = current_score[key][1]
-            resulting_indices[tuple(current_pos_index)] = next_piece_index
-            n_rotations = current_score[key][2]
-            print(current_pos_index)
-            print(n_rotations)
-            # stuk zelf, alsook de scores van dit stuk, roteren
-            for i in range(n_rotations):
-                self.pieces[next_piece_index] = self.pieces[next_piece_index].rotate()
-                temp_top = scores[next_piece_index]["left"]
-                scores[next_piece_index]["left"] = scores[next_piece_index]["bottom"]
-                scores[next_piece_index]["bottom"] = scores[next_piece_index]["right"]
-                scores[next_piece_index]["right"] = scores[next_piece_index]["top"]
-                scores[next_piece_index]["top"] = temp_top
-                for k in scores[next_piece_index]:
-                    scores[next_piece_index][k][2] = (scores[next_piece_index][k][2] + 1) % 4
-            current_piece_index = next_piece_index
-            # Of boven, of onderbuur plaatsen (op basis van score) en eventueel
-            # die buur roteren
-
-            # temp
-            if i == 2:
-                break
-
-        print(resulting_indices)
-        # resulterende indices omzetten naar de board orientatie
-        # (= de gebruikte shape eruit filteren)
-        # beide kunnen max 2 zijn
-        offset_h = int((resulting_indices[0, :] == 0).all()) + int((resulting_indices[1, :] == 0).all())
-        offset_v = int((resulting_indices[:, 0] == 0).all()) + int((resulting_indices[:, 1] == 0).all())
-        self.orientation = resulting_indices[offset_h:self.shape[0] + offset_h, offset_v:self.shape[1] + offset_v].tolist()
-        return True
+            if i in matched_indices:
+                for j in to_be_matched_indices - {i}:
+                    matches = self.pieces[i].match_all(self.pieces[j], self.threshold)
+                    # enkel maxima overhouden, zodat er makkelijker gekeken kan worden naar het aantal buren
+                    current_score = {x: max([[matches[y][x], j, y] for y in matches], key=lambda z: z[0]) for x in positions}
+                    scores[-1] = {x: max((scores[y][x], current_score[x]), key=lambda x: x[0]) for y in range(len(scores)) for x in positions}
+        return scores
     
+    @staticmethod
+    def get_next_match_pair(score_struct: list[dict], skip: int = 0) -> tuple[int, str, int, int]:
+        """
+        Interpreteert een matching struct en geeft drie getallen en een key terug,
+        waarvan de eerste de index is van het stuk met de hoogste score, de tweede 
+        het stuk waarmee deze hoogste score kan bekomen worden en de derde het aantal
+        rotaties dat er nodig zijn (0, 90°, 180° & 270°)
+        """
+        index = sorted(range(len(score_struct)), key=lambda i: score_struct[i][max(score_struct[i], key=score_struct[i].get)][0], reverse=True)[skip]
+        key = max(score_struct[index], key=score_struct[index].get)
+        return index, key, score_struct[index][key][1], score_struct[index][key][2]
+
     def create_image(self) -> np.ndarray:
         """
         Creeert een afbeelding met de stukken op de
         ingestelde posities en geeft deze terug
         """
+        # Indien er child board zijn, moeten deze images eerst gemaakt worden, en worden
+        # deze gematched
         result = np.concatenate([self.pieces[i].img for i in self.orientation[0]], axis=1)
         for row in self.orientation[1:]:
             result_row = np.concatenate([self.pieces[i].img for i in row], axis=1)
@@ -156,7 +209,7 @@ class Board:
     @staticmethod
     def create_board(img, puzzle_type: int, puzzle_dims: tuple[int, int] = None):
         # Create_Board gaat het type puzzel niet raden, dit moet
-        # appart gebeuren!
+        # apart gebeuren!
         assert(puzzle_type != Types.GUESS)
         if Types.is_tiled(puzzle_type):
             # Pieces zijn van type Tiled

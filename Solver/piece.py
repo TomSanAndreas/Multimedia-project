@@ -74,7 +74,7 @@ class TiledPiece(Piece):
     def __init__(self, img: np.ndarray, rot: int = 0, relations: 'list[tuple[float, TiledPiece]]' = None):
         super(TiledPiece, self).__init__(img, rot, relations)
 
-    def match_all(self, other: 'TiledPiece') -> dict:
+    def match_all(self, other: 'TiledPiece', accuracy: int = 10) -> dict:
         """
         Geeft scores in de vorm van een dict
         terug die aanduidt wat de gelijkaardigheid
@@ -98,14 +98,17 @@ class TiledPiece(Piece):
             # zowel dit stuk als het andere stuk
             # proberen en teruggeven
             for i in range(4):
-                result[i] = self.match(other)
+                result[i] = self.match(other, accuracy)
                 other = other.rotate()
         else:
-            # TODO
-            raise NotImplementedError()
+            # Rechthoekige stukken, 2 oriëntaties
+            # proberen in de plaats
+            for i in range(2):
+                result[2 * i] = self.match(other, accuracy)
+                other = other.rotate_n(2)
         return result
     
-    def match(self, other: 'TiledPiece') -> dict:
+    def match(self, other: 'TiledPiece', accuracy: int) -> dict:
         """
         Geeft scores in de vorm van een dict
         terug die aanduidt wat de gelijkaardigheid
@@ -119,21 +122,27 @@ class TiledPiece(Piece):
         }
         """
         result = {}
-        # links matchen met de rechterkant van other
-        result["left"] = self.calc_score(self.img[:, 0], other.img[:, -1])
-        # rechts matchen met de linkerkant van other
-        result["right"] = self.calc_score(self.img[:, -1], other.img[:, 0])
-        # boven matchen met de onderkant van other
-        result["top"] = self.calc_score(self.img[0, :], other.img[-1, :])
-        # onder matchen met de bovenkant van other
-        result["bottom"] = self.calc_score(self.img[-1, :], other.img[0, :])
+        if self.img.shape[0] == other.img.shape[0]:
+            # links matchen met de rechterkant van other
+            result["left"] = self.calc_score(self.img[:, 0], other.img[:, -1], abs_threshold = accuracy)
+            # rechts matchen met de linkerkant van other
+            result["right"] = self.calc_score(self.img[:, -1], other.img[:, 0], abs_threshold = accuracy)
+        if self.img.shape[1] == other.img.shape[1]:
+            # boven matchen met de onderkant van other
+            result["top"] = self.calc_score(self.img[0, :], other.img[-1, :], abs_threshold = accuracy)
+            # onder matchen met de bovenkant van other
+            result["bottom"] = self.calc_score(self.img[-1, :], other.img[0, :], abs_threshold = accuracy)
         return result
 
     def rotate(self) -> "TiledPiece":
         return TiledPiece(cv2.rotate(self.img, cv2.ROTATE_90_CLOCKWISE), (self.rot + 1) % 4)
+    
+    def rotate_n(self, n: int) -> "TiledPiece":
+        assert(n % 4 != 0)
+        return TiledPiece(cv2.rotate(self.img, [cv2.ROTATE_90_CLOCKWISE, cv2.ROTATE_180, cv2.ROTATE_90_COUNTERCLOCKWISE][n % 4 - 1]), self.rot + (n % 4 - 1))
 
     def rotate_to(self, absolute_rot: int) -> "TiledPiece":
-        n = (self.rot - absolute_rot) % 4 - 1
+        n = (absolute_rot - self.rot) % 4 - 1
         if n == -1:
             return TiledPiece(self.img, absolute_rot)
         code = [cv2.ROTATE_90_CLOCKWISE, cv2.ROTATE_180, cv2.ROTATE_90_COUNTERCLOCKWISE]
@@ -141,12 +150,14 @@ class TiledPiece(Piece):
 
 
     @staticmethod
-    def calc_score(arr1: np.ndarray, arr2: np.ndarray, threshold: float = .1) -> float:
+    def calc_score(arr1: np.ndarray, arr2: np.ndarray, abs_threshold: int = 10) -> float:
         """
         Berekent de gelijkaardigheid tussen de twee gegeven arrays
         met dimensies (L), waarvan
             L: de lengte van de array is
         """
         arr2s = np.array([np.roll(arr2, i) for i in range(-2, 3)])
-        result = (((1 - threshold) * arr1 <= arr2s) & (arr2s <= (1 + threshold) * arr1)).any(axis = 0).all(axis = 1)
+        lower = np.clip(arr1.astype(np.int16) - abs_threshold, 0, 255)
+        upper = np.clip(arr1.astype(np.int16) + abs_threshold, 0, 255)
+        result = ((lower <= arr2s) & (arr2s <= upper)).any(axis = 0).all(axis = 1)
         return np.count_nonzero(result) / len(result)

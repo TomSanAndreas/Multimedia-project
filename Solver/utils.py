@@ -76,7 +76,7 @@ def get_file_info_by_name(filename: str) -> tuple[int, tuple[int, int]]:
     fileprops = filename.lower().split('/')[-1].split('_')
     tiledesc = fileprops[0:2]
     # moet altijd 1 cijfer zijn bij 1 cijfer
-    tiledims = int(fileprops[2][0]), int(fileprops[2][2])
+    tiledims = int(fileprops[2][2]), int(fileprops[2][0])
     if tiledesc[0] == "jigsaw":
         tiletype = 0
     elif tiledesc[0] == "tiles":
@@ -92,3 +92,25 @@ def get_file_info_by_name(filename: str) -> tuple[int, tuple[int, int]]:
     else:
         raise RuntimeError("Invalid filename detected! (2)")
     return tiletype, tiledims
+
+def move(coord: tuple[int, int], key: str, n: int = 1, clip: bool = False, min: tuple[int, int] = None, max: tuple[int, int] = None) -> tuple[int, int]:
+    """
+    Verplaatst een coordinaat x,y volgens key n keer,
+    key zit in ["left", "right", "top", "bottom"]
+    """
+    y, x = coord
+    if key == "right":
+        x += n
+        x = max[1] if clip and x > max[1] else x
+    elif key == "left":
+        x -= n
+        x = min[1] if clip and x < min[1] else x
+    elif key == "bottom":
+        y += n
+        y = max[0] if clip and y > max[0] else y
+    elif key == "top":
+        y -= n
+        y = min[0] if clip and y < min[0] else y
+    else:
+        raise RuntimeError(f"Invalid key: {key}")
+    return y, x
