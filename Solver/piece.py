@@ -74,7 +74,7 @@ class TiledPiece(Piece):
     def __init__(self, img: np.ndarray, rot: int = 0, relations: 'list[tuple[float, TiledPiece]]' = None):
         super(TiledPiece, self).__init__(img, rot, relations)
 
-    def match_all(self, other: 'TiledPiece', accuracy: int = 10) -> dict:
+    def match_all(self, other: 'TiledPiece', accuracy: int = 10, max_offset: tuple[int, int] = (-2, 2)) -> dict:
         """
         Geeft scores in de vorm van een dict
         terug die aanduidt wat de gelijkaardigheid
@@ -98,17 +98,17 @@ class TiledPiece(Piece):
             # zowel dit stuk als het andere stuk
             # proberen en teruggeven
             for i in range(4):
-                result[i] = self.match(other, accuracy)
+                result[i] = self.match(other, accuracy, max_offset)
                 other = other.rotate()
         else:
             # Rechthoekige stukken, 2 oriëntaties
             # proberen in de plaats
             for i in range(2):
-                result[2 * i] = self.match(other, accuracy)
+                result[2 * i] = self.match(other, accuracy, max_offset)
                 other = other.rotate_n(2)
         return result
     
-    def match(self, other: 'TiledPiece', accuracy: int) -> dict:
+    def match(self, other: 'TiledPiece', accuracy: int, max_offset: tuple[int, int]) -> dict:
         """
         Geeft scores in de vorm van een dict
         terug die aanduidt wat de gelijkaardigheid
@@ -124,14 +124,14 @@ class TiledPiece(Piece):
         result = {}
         if self.img.shape[0] == other.img.shape[0]:
             # links matchen met de rechterkant van other
-            result["left"] = self.calc_score(self.img[:, 0], other.img[:, -1], abs_threshold = accuracy)
+            result["left"] = self.calc_score(self.img[:, 0], other.img[:, -1], abs_threshold = accuracy, max_offset = max_offset)
             # rechts matchen met de linkerkant van other
-            result["right"] = self.calc_score(self.img[:, -1], other.img[:, 0], abs_threshold = accuracy)
+            result["right"] = self.calc_score(self.img[:, -1], other.img[:, 0], abs_threshold = accuracy, max_offset = max_offset)
         if self.img.shape[1] == other.img.shape[1]:
             # boven matchen met de onderkant van other
-            result["top"] = self.calc_score(self.img[0, :], other.img[-1, :], abs_threshold = accuracy)
+            result["top"] = self.calc_score(self.img[0, :], other.img[-1, :], abs_threshold = accuracy, max_offset = max_offset)
             # onder matchen met de bovenkant van other
-            result["bottom"] = self.calc_score(self.img[-1, :], other.img[0, :], abs_threshold = accuracy)
+            result["bottom"] = self.calc_score(self.img[-1, :], other.img[0, :], abs_threshold = accuracy, max_offset = max_offset)
         return result
 
     def rotate(self) -> "TiledPiece":
@@ -150,13 +150,15 @@ class TiledPiece(Piece):
 
 
     @staticmethod
-    def calc_score(arr1: np.ndarray, arr2: np.ndarray, abs_threshold: int = 10) -> float:
+    def calc_score(arr1: np.ndarray, arr2: np.ndarray, abs_threshold: int = 10, max_offset: tuple[int, int] = (-2, 2)) -> float:
         """
         Berekent de gelijkaardigheid tussen de twee gegeven arrays
-        met dimensies (L), waarvan
-            L: de lengte van de array is
+        met dimensies (L), met als extra parameters de threshold
+        (de maximale afwijking tussen 2 waardes) en de offset 
+        (maximale afwijking in positie, zowel links (1e offset) als
+        rechts (2e offset))
         """
-        arr2s = np.array([np.roll(arr2, i) for i in range(-2, 3)])
+        arr2s = np.array([np.roll(arr2, i) for i in range(max_offset[0], max_offset[1] + 1)])
         lower = np.clip(arr1.astype(np.int16) - abs_threshold, 0, 255)
         upper = np.clip(arr1.astype(np.int16) + abs_threshold, 0, 255)
         result = ((lower <= arr2s) & (arr2s <= upper)).any(axis = 0).all(axis = 1)
