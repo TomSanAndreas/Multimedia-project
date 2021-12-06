@@ -17,7 +17,7 @@ class Board:
         # lijst van lijsten die alle indices van het (opgeloste) bord bevatten
         self.orientation = [[y * shape[0] + x for x in range(shape[0])] for y in range(shape[1])]
         # initiele waarde, gebruikt bij het oplossen van de puzzel
-        self.threshold = 10
+        self.threshold = 5
 
     def show(self) -> None:
         fig = plt.figure()
@@ -35,25 +35,44 @@ class Board:
         Probeert het bord op te lossen
         Geeft True indien succesvol
         """
-        while self.threshold > 0:
+        print("\033[1mSolving...\033[0m")
+        attempt_index = 1
+        while self.threshold < 15:
+            print(f"\033[4mAttempt {attempt_index:2}/15\033[0m: Active" + (" " * 20))
             success, result = self.try_solve()
             if success:
                 self.orientation = result
-                print("Succes!")
+                # go a line back and update the header, with extra newline so status remains visible
+                print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[92mSucces!\033[0m" + (" " * 20), end='\n\n')
                 return True
-            # TODO temp
-            self.orientation = result
-            r = self.create_image()
-            show_image(r)
-            # end temp
+            # niet succesvol, alle orientaties terugzetten, threshold
+            # verlagen en opnieuw proberen
+            self.pieces = [p.rotate_to(0) for p in self.pieces]
+            self.threshold += 1
+            # go a line back and update the status
+            print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[91mFailed!\033[0m" + (" " * 20))
+            attempt_index += 1
+
+        # threshold resetten en naar beneden toe werken
+        self.threshold = 5
+        while self.threshold > 0:
+            print(f"\033[4mAttempt {attempt_index:2}/15\033[0m: Active" + (" " * 20))
+            success, result = self.try_solve()
+            if success:
+                self.orientation = result
+                # go a line back and update the header, with extra newline so status remains visible
+                print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[92mSucces!\033[0m" + (" " * 20), end='\n\n')
+                return True
             # niet succesvol, alle orientaties terugzetten, threshold
             # verlagen en opnieuw proberen
             self.pieces = [p.rotate_to(0) for p in self.pieces]
             self.threshold -= 1
-            print("- ", end='')
+            # go a line back & update the header
+            print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[91mFailed!\033[0m" + (" " * 20))
+            attempt_index += 1
+
         # puzzel werd niet correct opgelost, toch een poging instellen
         self.orientation = result
-        print("Failed!")
         return False
 
     def try_solve(self) -> tuple[bool, list[list]]:
@@ -107,6 +126,14 @@ class Board:
             self.pieces[n_index] = self.pieces[n_index].rotate_to(r_index)
             # stuk niet meer als unused markeren
             unused_indices -= {n_index}
+            # status visualiseren
+            print("[" + ("=" * len(used_indices)) + (" " * (len(unused_indices) - 1)) + "] " + str(int((len(used_indices) + 1) / (self.shape[0] * self.shape[1]) * 100)) + "%")
+            temp_result = self.clean_up_result(indices, self.shape)
+            for row in temp_result:
+                print(" " * 30)
+                for el in row:
+                    print(f" {el:2} " if el != -1 else " ** ", end="")
+            print(f"\033[{self.shape[0] + 2}A")
         # laatste stuk plaatsen is vrij eenvoudig: matchen met een
         # geplaatst stuk en de orientatie zo bepalen tijdens het plaatsen
         # eerst oplossing vereenvoudigen zodat result nu alle
@@ -133,6 +160,7 @@ class Board:
         score = self.pieces[ref_piece].match_all(self.pieces[last_piece], self.threshold)
         n_rotations = max(score.keys(), key=lambda i: score[i][key])
         self.pieces[last_piece] = self.pieces[last_piece].rotate_to(n_rotations)
+        print("\033[1A")
         return True, result
     
     @staticmethod
@@ -142,14 +170,12 @@ class Board:
         numpy array om te zetten naar een compactere lijst
         van lijsten
         """
-        # offset_h = int((arr[0, :] == -1).all()) + int((arr[1, :] == -1).all())
         offset_h = 0
         while (arr[offset_h, :] == -1).all():
             offset_h += 1
         offset_v = 0
         while (arr[:, offset_v] == -1).all():
             offset_v += 1
-        # offset_v = int((arr[:, 0] == -1).all()) + int((arr[:, 1] == -1).all())
         return arr[offset_h:shape[1] + offset_h, offset_v:shape[0] + offset_v].tolist()
 
     def create_matching_struct(self, matched_indices: set[int], to_be_matched_indices: set[int]) -> list[dict]:
@@ -201,8 +227,9 @@ class Board:
         # Indien er child board zijn, moeten deze images eerst gemaakt worden, en worden
         # deze gematched
         result = np.concatenate([self.pieces[i].img for i in self.orientation[0]], axis=1)
+        black = np.zeros(self.pieces[0].img.shape, dtype=np.uint8)
         for row in self.orientation[1:]:
-            result_row = np.concatenate([self.pieces[i].img for i in row], axis=1)
+            result_row = np.concatenate([self.pieces[i].img if i != -1 else black for i in row], axis=1)
             result = np.concatenate((result, result_row))
         return result
 
@@ -259,9 +286,9 @@ class Board:
                 # met n_h en n_v de img opsplitsen in stukken en teruggeven
                 h_size = int(w / n_h)
                 v_size = int(h / n_v)
-                print(f"Gevonden dimensies: {n_h} x {n_v}")
+                print(f"Gevonden dimensies: {n_h} x {n_v}, gegeven dimensies: {puzzle_dims[0]} x {puzzle_dims[1]}")
                 h_size, v_size = w // puzzle_dims[0], h // puzzle_dims[1]
-                print(f"Gegeven dimensies: {puzzle_dims[0]} x {puzzle_dims[1]}")
+                n_h, n_v = puzzle_dims[0], puzzle_dims[1]
                 return Board([TiledPiece(img[v_size * y:v_size * (y + 1), h_size * x:h_size * (x + 1)]) for y in range(n_v) for x in range(n_h)], (n_h, n_v))
             else:
                 # De stukken liggen verspreid op het beeld, met
