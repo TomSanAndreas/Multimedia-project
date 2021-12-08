@@ -21,6 +21,8 @@ class Board:
         self.threshold = 5
         # initiele waarde, gebruikt bij het oplossen van de puzzel
         self.max_pixel_offset = (-2, 2)
+        # vlag die bijhoudt wat de kleuren van de foto zijn (zwart/wit of rgb)
+        self.is_rgb = len(pieces[0].img.shape) == 3 and not ((pieces[0].img[:,:,0] == pieces[0].img[:,:,1]) & (pieces[0].img[:, :, 1] == pieces[0].img[:, :, 2])).all()
 
     def show(self) -> None:
         fig = plt.figure()
@@ -43,107 +45,75 @@ class Board:
         # 0: aantal opgeloste stukken; 1: positie van elk stuk; 2: kopie van
         # elk stuk met de juiste rotatie
         most_completed = (0, [], [])
-        # beginnen met oplossen
-        print("\033[1m=> Solving... (method 1 of 2)\033[0m")
-        self.max_pixel_offset = (-2, 2)
-        self.threshold = 5
-        attempt_index = 1
-        while self.threshold < 15:
-            print(f"\033[4mAttempt {attempt_index:2}/15\033[0m: Active" + (" " * 20))
-            start_time = time()
-            success, result = self.try_solve()
+        # parameter volgorde voor RGB & B&W foto's
+        params = (((5, 15), (0, 0)), ((5, 0), (0, 0)), ((5, 15), (-1, 1)), ((5, 0), (-1, 1)), ((5, 15), (-2, 2)), ((5, 0), (-2, 2))) if self.is_rgb else \
+                 (((5, 0), (0, 0)), ((5, 0), (-1, 1)), ((5, 0), (-2, 2)), ((5, 15), (0, 0)), ((5, 15), (-1, 1)), ((5, 15), (-2, 2)))
+        print("Herkende kleuromgeving: \033[1m" + ("RGB" if self.is_rgb else "B&W") + "\033[0m.\nDe gebruikte parameters (configuraties) hiervoor zijn:\n  #   \033[4mThreshold bereik\033[0m    \033[4mMaximum pixel offset\033[0m")
+        for index, param in enumerate(params):
+            print(f" {index + 1:2}       {param[0][0]:2} -> {param[0][1]:2}             {param[1][0]:2}, {param[1][1]:2}")
+        index = 1
+        attempts = 0
+        for param in params:
+            # beginnen met oplossen
+            print(f"\033[1m=> Oplossen... (configuratie {index} van {len(params)})\033[0m")
+            success, attempts, solution = self.bulk_solve(param[0], param[1], attempts)
             if success:
-                self.orientation = result
-                # go a line back and update the header, with extra newline so status remains visible
-                print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[92mSucces after {(time() - start_time):2.1f}s!\033[0m" + (" " * 20), end='\n')
+                self.orientation = solution[1]
+                self.pieces = solution[2]
                 return True
-            # indien beter dan vorige resultaten, deze bijhouden
-            n_ingevuld = len([1 for row in result for el in row if el != -1])
-            if n_ingevuld > most_completed[0]:
-                most_completed = (n_ingevuld, result, [p for p in self.pieces])
-            # niet succesvol, alle orientaties terugzetten, threshold
-            # verlagen en opnieuw proberen
-            self.pieces = [p.rotate_to(0) for p in self.pieces]
-            self.threshold += 1
-            # go a line back and update the status
-            print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[91mFailed after {(time() - start_time):2.1f}s!\033[0m" + (" " * 20))
-            attempt_index += 1
-
-        # threshold resetten en naar beneden toe werken
-        self.threshold = 5
-        while self.threshold > 0:
-            print(f"\033[4mAttempt {attempt_index:2}/15\033[0m: Active" + (" " * 20))
-            start_time = time()
-            success, result = self.try_solve()
-            if success:
-                self.orientation = result
-                # go a line back and update the header, with extra newline so status remains visible
-                print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[92mSucces after {(time() - start_time):2.1f}s!\033[0m" + (" " * 20), end='\n')
-                return True
-            # indien beter dan vorige resultaten, deze bijhouden
-            n_ingevuld = len([1 for row in result for el in row if el != -1])
-            if n_ingevuld > most_completed[0]:
-                most_completed = (n_ingevuld, result, [p for p in self.pieces])
-            # niet succesvol, alle orientaties terugzetten, threshold
-            # verlagen en opnieuw proberen
-            self.pieces = [p.rotate_to(0) for p in self.pieces]
-            self.threshold -= 1
-            # go a line back & update the header
-            print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[91mFailed after {(time() - start_time):2.1f}s!\033[0m" + (" " * 20))
-            attempt_index += 1
-        # extra parameters van de matching inkorten, en opnieuw
-        # alle thresholds overlopen
-        print("\033[1m=> Solving... (method 2 of 2)\033[0m" + " " * 10)
-        self.max_pixel_offset = (-1, 1)
-        self.threshold = 5
-        attempt_index = 1
-        while self.threshold < 15:
-            print(f"\033[4mAttempt {attempt_index:2}/15\033[0m: Active" + (" " * 20))
-            start_time = time()
-            success, result = self.try_solve()
-            if success:
-                self.orientation = result
-                # go a line back and update the header, with extra newline so status remains visible
-                print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[92mSucces after {(time() - start_time):2.1f}s!\033[0m" + (" " * 20), end='\n')
-                return True
-            # indien beter dan vorige resultaten, deze bijhouden
-            n_ingevuld = len([1 for row in result for el in row if el != -1])
-            if n_ingevuld > most_completed[0]:
-                most_completed = (n_ingevuld, result, [p for p in self.pieces])
-            # niet succesvol, alle orientaties terugzetten, threshold
-            # verlagen en opnieuw proberen
-            self.pieces = [p.rotate_to(0) for p in self.pieces]
-            self.threshold += 1
-            # go a line back and update the status
-            print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[91mFailed after {(time() - start_time):2.1f}s!\033[0m" + (" " * 20))
-            attempt_index += 1
-
-        # threshold resetten en naar beneden toe werken
-        self.threshold = 5
-        while self.threshold > 0:
-            print(f"\033[4mAttempt {attempt_index:2}/15\033[0m: Active" + (" " * 20))
-            start_time = time()
-            success, result = self.try_solve()
-            if success:
-                self.orientation = result
-                # go a line back and update the header, with extra newline so status remains visible
-                print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[92mSucces after {(time() - start_time):2.1f}s!\033[0m" + (" " * 20), end='\n')
-                return True
-            # indien beter dan vorige resultaten, deze bijhouden
-            n_ingevuld = len([1 for row in result for el in row if el != -1])
-            if n_ingevuld > most_completed[0]:
-                most_completed = (n_ingevuld, result, [p for p in self.pieces])
-            # niet succesvol, alle orientaties terugzetten, threshold
-            # verlagen en opnieuw proberen
-            self.pieces = [p.rotate_to(0) for p in self.pieces]
-            self.threshold -= 1
-            # go a line back & update the header
-            print(f"\033[1A\033[4mAttempt {attempt_index:2}/15\033[0m: \033[91mFailed after {(time() - start_time):2.1f}s!\033[0m" + (" " * 20))
-            attempt_index += 1
+            # beste oplossing bijhouden in het geval dat de puzzel niet opgelost geraakt
+            if solution[0] > most_completed[0]:
+                most_completed = solution
+            index += 1
         # puzzel werd niet correct opgelost, beste poging instellen
+        print(f"\033[1m=> De puzzel is niet opgelost. Het dichtste dat de solver is geraakt tot oplossen wordt nu getoond.\033[0m")
         self.orientation = most_completed[1]
         self.pieces = most_completed[2]
         return False
+
+    def bulk_solve(self, threshold_range: tuple[int, int], pixel_offset: tuple[int, int], attempts_offset: int = 0) -> tuple[bool, int, tuple[int, list, list]]:
+        """
+        "Private" functie, probeert de puzzel op te lossen in bulk
+        met de gegeven bereiken als parameters. Geeft een tuple terug
+        met zowel de status in, alsook het aantal keren er geprobeerd
+        werd op te lossen tot een eventuele oplossing gevonden werd
+        en een eventuele beste oplossing indien onsuccesvol
+        """
+        # gegeven (initiele) parameters instellen
+        self.threshold = threshold_range[0]
+        self.max_pixel_offset = pixel_offset
+        # threshold moet per iteratie of incrementeren of decrementeren
+        dt = bool(threshold_range[1] > threshold_range[0]) * 2 - 1
+        # bijhouden hoeveel pogingen er zijn geweest
+        current_attempt = 0 + attempts_offset
+        n_attempts = abs(threshold_range[0] - threshold_range[1]) + attempts_offset
+        # een eventueel beste resultaat bijhouden
+        # structuur: aantal opgeloste stukken, positie van elk stuk (self.orientation) en een kopie van elk stuk
+        # met de juiste rotatie
+        best_solution = (0, [], [])
+        while self.threshold != threshold_range[1]:
+            current_attempt += 1
+            # huidige status weergeven
+            print(f"Poging {current_attempt:2}/{n_attempts}: Actief" + (" " * 20))
+            start_time = time()
+            # elk stuk resetten voor het zekerste
+            self.pieces = [p.rotate_to(0) for p in self.pieces]
+            success, result = self.try_solve()
+            if success:
+                best_solution = (self.shape[0] * self.shape[1], result, [p for p in self.pieces])
+                # go a line back and update the header, with extra newline so status remains visible
+                print(f"\033[1APoging {current_attempt:2}/{n_attempts}: \033[92mGelukt na {(time() - start_time):2.1f}s!\033[0m" + (" " * 20), end='\n')
+                return True, current_attempt, best_solution
+            # indien beter dan vorige resultaten, deze bijhouden
+            n_ingevuld = len([1 for row in result for el in row if el != -1])
+            if n_ingevuld > best_solution[0]:
+                best_solution = (n_ingevuld, result, [p for p in self.pieces])
+            # niet succesvol, threshold aanpassen en opnieuw proberen
+            # go a line back and update the status
+            print(f"\033[1APoging {current_attempt:2}/{n_attempts}: \033[91mGefaald na {(time() - start_time):2.1f}s!\033[0m" + (" " * 20))
+            # opnieuw proberen
+            self.threshold += dt
+        return False, current_attempt, best_solution
 
     def try_solve(self) -> tuple[bool, list[list]]:
         """
@@ -168,8 +138,11 @@ class Board:
             scores = self.create_matching_struct(used_indices, unused_indices)
             # zoeken naar een stuk die geplaatst kan worden op een ongebruikte plaats
             skip = 0
+            l = self.get_next_match_pair(scores)
             while skip < min(len(used_indices), len(unused_indices)):
-                p_index, key, n_index, r_index = self.get_next_match_pair(scores, skip)
+                key = max(scores[l[skip]], key=scores[l[skip]].get)
+                p_index = l[skip]
+                n_index, r_index = scores[p_index][key][1], scores[p_index][key][2]
                 # p_index zit in used_indices, en de positie van dit stuk moet opgeschoven
                 # worden volgens key, zodat de nieuwe positie kan ingevuld worden met het
                 # nieuwe stuk
@@ -230,18 +203,40 @@ class Board:
         # zowel één horizontale als verticale buur gebruiken
         ref_piece = result[last_pos[0]][last_pos[1] + 1] if last_pos[1] == 0 else result[last_pos[0]][last_pos[1] - 1]
         key = "left" if last_pos[1] == 0 else "right"
-        score = self.pieces[ref_piece].match_all(self.pieces[last_piece], self.threshold)
+        score = self.pieces[ref_piece].match_all(self.pieces[last_piece], self.threshold, self.max_pixel_offset)
         # aantal rotaties volgens horizontale buur
         n_rotations_h = max(score.keys(), key=lambda i: score[i][key])
         certainty_h = score[n_rotations_h][key]
-
+        # indien er een andere horizontale buur is, en de zekerheid daar hoger ligt, dan deze rotaties
+        # gebruiken in de plaats
+        if 0 < last_pos[1] < self.shape[0] - 1:
+            key = "left"
+            ref_piece = result[last_pos[0]][last_pos[1] + 1]
+            score = self.pieces[ref_piece].match_all(self.pieces[last_piece], self.threshold, self.max_pixel_offset)
+            n_pos_rotations_h = max(score.keys(), key=lambda i: score[i][key])
+            if score[n_pos_rotations_h][key] > certainty_h:
+                # alternatieve score is beter, deze gebruiken in de plaats
+                certainty_h = score[n_pos_rotations_h][key]
+                n_rotations_h = n_pos_rotations_h
+        # idem volgens verticale buur
         ref_piece = result[last_pos[0] + 1][last_pos[1]] if last_pos[0] == 0 else result[last_pos[0] - 1][last_pos[1]]
         key = "top" if last_pos[0] == 0 else "bottom"
-        score = self.pieces[ref_piece].match_all(self.pieces[last_piece], self.threshold)
+        score = self.pieces[ref_piece].match_all(self.pieces[last_piece], self.threshold, self.max_pixel_offset)
         # aantal rotaties volgens verticale buur
         n_rotations_v = max(score.keys(), key=lambda i: score[i][key])
         certainty_v = score[n_rotations_v][key]
-        
+        # indien er een andere horizontale buur is, en de zekerheid daar hoger ligt, dan deze rotaties
+        # gebruiken in de plaats
+        if 0 < last_pos[0] < self.shape[1] - 1:
+            key = "top"
+            ref_piece = result[last_pos[0] + 1][last_pos[1]]
+            score = self.pieces[ref_piece].match_all(self.pieces[last_piece], self.threshold, self.max_pixel_offset)
+            n_pos_rotations_v = max(score.keys(), key=lambda i: score[i][key])
+            if score[n_pos_rotations_v][key] > certainty_v:
+                # alternatieve score is beter, deze gebruiken in de plaats
+                certainty_v = score[n_pos_rotations_v][key]
+                n_rotations_v = n_pos_rotations_v
+        # hoogste kans gebruiken voor het aantal rotaties vast te leggen     
         n_rotations = n_rotations_h if certainty_h > certainty_v else n_rotations_v
         self.pieces[last_piece] = self.pieces[last_piece].rotate_to(n_rotations)
         print()
@@ -303,14 +298,10 @@ class Board:
     @staticmethod
     def get_next_match_pair(score_struct: list[dict], skip: int = 0) -> tuple[int, str, int, int]:
         """
-        Interpreteert een matching struct en geeft drie getallen en een key terug,
-        waarvan de eerste de index is van het stuk met de hoogste score, de tweede 
-        het stuk waarmee deze hoogste score kan bekomen worden en de derde het aantal
-        rotaties dat er nodig zijn (0, 90°, 180° & 270°)
+        Vormt een score struct om volgens de meest interessante score, en geeft deze zo
+        gesorteerd terug
         """
-        index = sorted(range(len(score_struct)), key=lambda i: score_struct[i][max(score_struct[i], key=score_struct[i].get)][0], reverse=True)[skip]
-        key = max(score_struct[index], key=score_struct[index].get)
-        return index, key, score_struct[index][key][1], score_struct[index][key][2]
+        return sorted(range(len(score_struct)), key=lambda i: score_struct[i][max(score_struct[i], key=score_struct[i].get)][0], reverse=True)
 
     def create_image(self) -> np.ndarray:
         """
