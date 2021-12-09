@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="BranchesTreeState">
     <expand>
       <path>
@@ -43,8 +46,9 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
     <property name="last_opened_file_path" value="D:/Mijn Documenten/Unief/MASTER/SEM1/Multimedia/Labo" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.Scrambled_tile_detection_PREP">
+  <component name="RunManager" selected="Python.main">
     <configuration name="Audio_voorbereiding_MAGWEG" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Multimedia_project" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -129,11 +133,17 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Python.Audio_voorbereiding_MAGWEG" />
+      <item itemvalue="Python.base" />
+      <item itemvalue="Python.main" />
+      <item itemvalue="Python.Scrambled_tile_detection_PREP" />
+    </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.main" />
         <item itemvalue="Python.Scrambled_tile_detection_PREP" />
         <item itemvalue="Python.base" />
-        <item itemvalue="Python.main" />
         <item itemvalue="Python.Audio_voorbereiding_MAGWEG" />
       </list>
     </recent_temporary>
@@ -162,39 +172,43 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1638271848997">
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1639051902287">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1638271848997" />
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1639051902287" />
     <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1636901501035">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state x="549" y="167" key="FileChooserDialogImpl/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1636901501035" />
     <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1636723645564" />
-    <state width="1515" height="232" key="GridCell.Tab.0.bottom" timestamp="1638543945331">
+    <state width="1515" height="304" key="GridCell.Tab.0.bottom" timestamp="1639054771535">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="282" key="GridCell.Tab.0.bottom/-1920.0.1920.1030/0.0.1536.824@-1920.0.1920.1030" timestamp="1637180751381" />
     <state width="1515" height="232" key="GridCell.Tab.0.bottom/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1638543945331" />
-    <state width="1515" height="232" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1638273143475" />
-    <state width="1515" height="232" key="GridCell.Tab.0.center" timestamp="1638543945331">
+    <state width="1515" height="304" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1639054771535" />
+    <state width="1515" height="304" key="GridCell.Tab.0.center" timestamp="1639054771527">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="282" key="GridCell.Tab.0.center/-1920.0.1920.1030/0.0.1536.824@-1920.0.1920.1030" timestamp="1637180751381" />
     <state width="1515" height="232" key="GridCell.Tab.0.center/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1638543945331" />
-    <state width="1515" height="232" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1638273143475" />
-    <state width="1515" height="232" key="GridCell.Tab.0.left" timestamp="1638543945331">
+    <state width="1515" height="304" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1639054771527" />
+    <state width="1515" height="304" key="GridCell.Tab.0.left" timestamp="1639054771527">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="282" key="GridCell.Tab.0.left/-1920.0.1920.1030/0.0.1536.824@-1920.0.1920.1030" timestamp="1637180751381" />
     <state width="1515" height="232" key="GridCell.Tab.0.left/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1638543945331" />
-    <state width="1515" height="232" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1638273143475" />
-    <state width="1515" height="232" key="GridCell.Tab.0.right" timestamp="1638543945331">
+    <state width="1515" height="304" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1639054771527" />
+    <state width="1515" height="304" key="GridCell.Tab.0.right" timestamp="1639054771527">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="282" key="GridCell.Tab.0.right/-1920.0.1920.1030/0.0.1536.824@-1920.0.1920.1030" timestamp="1637180751381" />
     <state width="1515" height="232" key="GridCell.Tab.0.right/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1638543945331" />
-    <state width="1515" height="232" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1638273143475" />
+    <state width="1515" height="304" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1639054771527" />
+    <state x="277" y="57" key="SettingsEditor" timestamp="1639051955078">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="277" y="57" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1639051955078" />
     <state x="586" y="326" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1636723867297">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
