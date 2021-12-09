@@ -1,32 +1,127 @@
 #bron: https://stackoverflow.com/questions/55169645/square-detection-in-image
 import cv2
 import numpy as np
-import sys
+# import sys
 
 """Source:  https://stackoverflow.com/questions/45613544/python-opencv-cannot-change-pixel-value-of-a-picture
             https://www.geeksforgeeks.org/python-grayscaling-of-images-using-opencv/
+            rotatie/crop: https://newbedev.com/how-to-straighten-a-rotated-rectangle-area-of-an-image-using-opencv-in-python
+            crop: https://stackoverflow.com/questions/13538748/crop-black-edges-with-opencv
+            roteren hardcoded: https://learnopencv.com/image-rotation-and-translation-using-opencv/#image-rotation
     
     functie werkt 100% bij 8/9 van de figuren. (Bij de figuren 02 herkent hij de randen maar ook de ogen van de kat)
 """
 
-# Figuur inlezen
-image = cv2.imread('Documentatie/Puzzels/Tiles_scrambled/tiles_scrambled_4x4_00.png')
+def crop_rectangle(img, rect):
+    # get the parameter of the small rectangle
+    center = rect[0]
+    size = rect[1]
+    angle = rect[2]
+    center, size = tuple(map(int, center)), tuple(map(int, size))
+    # get row and col num in img
+    height, width = img.shape[0], img.shape[1]
+    #print("width: {}, height: {}".format(width, height))
+    M = cv2.getRotationMatrix2D(center, angle, 1)
+    img_rot = cv2.warpAffine(img, M, (width, height))
+    img_crop = cv2.getRectSubPix(img_rot, size, center)
+    return img_crop, img_rot
 
-#figuur converteren naar grijswaarden
-gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+def crop_rect_help(image):
+    gray_rot = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray_rot, 1, 255, cv2.THRESH_BINARY)
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    #print(len(contours[0]))
+    cnt = contours[0]
+    x, y, w, h = cv2.boundingRect(cnt)
+    rect = cv2.minAreaRect(cnt)
+    #print("rect: {}".format(rect))
+    box = cv2.boxPoints(rect)
+    box = np.int0(box)
+    # print("bounding box: {}".format(box))
+    # randen tekenen op figuur
+    # cv2.drawContours(pieces[0][0], [box], 0, (0, 0, 255), 2)
+    img_crop, img_rot = crop_rectangle(image, rect)
+    #print("size of original img: {}".format(pieces[0][0].shape))
+    #print("size of rotated img: {}".format(img_rot.shape))
+    #print("size of cropped img: {}".format(img_crop.shape))
+    new_size = (int(img_rot.shape[1] / 2), int(img_rot.shape[0] / 2))
+    img_rot_resized = cv2.resize(img_rot, new_size)
+    new_size = (int(image.shape[1] / 2)), int(image.shape[0] / 2)
+    img_resized = cv2.resize(image, new_size)
+    # cv2.imshow("original contour", img_resized)
+    # cv2.imshow("rotated image", img_rot_resized)
+    # cv2.imshow("cropped_box", img_crop)
+    return img_crop
 
-#optioneel: lengte en breedte bepalen (nodig voor methode 2)
-# (row,col) = gray.shape[0:2]
-# print(row, col)
+def knip_tegels(image, dimensions):
+    # ---Figuur inlezen + aantal stukken en parameters bepalen (VIA PARAMETERS)---
+    # filename = 'Documentatie/Puzzels/Tiles_scrambled/tiles_scrambled_3x3_00.png'
+    # image = cv2.imread(filename)
+    # index = filename.find('x')
+    # aantal_h = int(filename[index-1])
+    # aantal_v = int(filename[index+1])
 
-#array achter de figuur printen
-#np.set_printoptions(threshold=sys.maxsize)
-#print(gray)
-#cv2.imshow('test1', gray)
+    aantal_h = dimensions[1]
+    aantal_v = dimensions[0]
+    print(aantal_h)
+    print(aantal_v)
 
+    #figuur converteren naar grijswaarden
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+    #optioneel: lengte en breedte bepalen (nodig voor methode 2)
+    # (row,col) = gray.shape[0:2]
+    # print(row, col)
+    # splits = row/2
+
+    #---stukken splitsen---
+    pieces = [[0]*aantal_h]*aantal_v
+    pieces_res = [[0]*aantal_h]*aantal_v
+    # print(pieces)
+    b = int(image.shape[0]/aantal_h)
+    l = int(image.shape[1]/aantal_v)
+    pieceno = 0
+    for i in range(aantal_v):
+        for j in range(aantal_h):
+            pieceno = pieceno+1
+            #print(pieceno)
+            pieces[i][j] = image[(i*b):((i+1)*b), (j*l):((j+1)*l)]
+            #afmetingen controleren
+            #print(str(i*b) + " " + str((i+1)*b) + " " + str(j*l) + " " + str((j+1)*l))
+            #cv2.imshow("Piece no." + str(pieceno), pieces[i][j])
+            pieces_res[i][j] = crop_rect_help(pieces[i][j])
+            # Resultaat tonen
+            cv2.imshow("Piece no." + str(pieceno), pieces_res[i][j])
+
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+# DEMO
+if __name__ == '__main__':
+    filename = 'Documentatie/Puzzels/Tiles_scrambled/tiles_scrambled_5x5_06.png'
+    image = cv2.imread(filename)
+    index = filename.find('x')
+    aantal_h = int(filename[index-1])
+    aantal_v = int(filename[index+1])
+    dimensions = [aantal_v,aantal_h]
+    pieces = knip_tegels(image, dimensions)
+
+
+
+
+
+
+"""
+#Oude crop methode
+    # # for c in cnt:
+    # #     cv2.drawContours(pieces[0][0],[c], 0, (0,255,0), 2)
+    # crop = pieces[0][0][y+1:y+h-1,x+2:x+w-2]
+    # cv2.imshow("test", crop)
+
+#---OUDE METHODE voor randdetectie---
 #puzzeltegels witmaken vanuit grijswaardenbeeld (methode1)
-notblack=np.where((gray[:,:]!=0))
-gray[notblack]=(255)
+# notblack=np.where((gray[:,:]!=0))
+# gray[notblack]=(255)
 
 #(methode2)
 # for i in range(row):
@@ -45,21 +140,40 @@ gray[notblack]=(255)
 # cv2.destroyAllWindows()
 
 #Canny toepassen + randen van de tegels tekenen
-canny = cv2.Canny(gray, 130, 255, 1)
-# hough = cv2.HoughLines(canny, 1, np.pi / 180, 150, None, 0, 0)
-cnts = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-cnts = cnts[0] if len(cnts) == 2 else cnts[1]
-for c in cnts:
-    cv2.drawContours(image,[c], 0, (0,255,0), 2)
-
-#Resultaat tonen
-cv2.imshow("result", image)
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+# canny = cv2.Canny(gray, 130, 255, 1)
+# # hough = cv2.HoughLines(canny, 1, np.pi / 180, 150, None, 0, 0)
+# cnts = cv2.findContours(canny, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+# cnts = cnts[0] if len(cnts) == 2 else cnts[1]
+# for c in cnts:
+#     cv2.drawContours(image,[c], 0, (0,255,0), 2)
 
 
 
-"""
+Hardoded ter test:
+#hardcoded voor 2x2
+# pieceRT = image[:b,l+1:]
+# pieceLT = image[:b,:l]
+# pieceLB = image[b+1:,:l]
+# pieceRB = image[b+1:,l+1:]
+# cv2.imshow("Left Top", crop_rect_help(pieceLT))
+# cv2.imshow("Right Top", crop_rect_help(pieceRT))
+# cv2.imshow("Left Bottom", crop_rect_help(pieceLB))
+# cv2.imshow("Right Bottom", crop_rect_help(pieceRB))
+
+# cv2.imshow("piece1", pieces_res[0][0])
+# cv2.imshow("piece2", pieces_res[0][1])
+# cv2.imshow("piece3", pieces_res[1][0])
+# cv2.imshow("piece4", pieces_res[1][1])
+
+#rotatie voor piece0
+# height, width = pieces[0][0].shape[:2]
+# center = (width/2, height/2)
+# print(center)
+# rotate_matrix = cv2.getRotationMatrix2D(center=center, angle=17, scale=1)
+# rotated_image = cv2.warpAffine(src=pieces[0][0], M=rotate_matrix, dsize=(width, height))
+# cv2.imshow('Original image', pieces[0][0])
+# cv2.imshow('Rotated image', rotated_image)
+
 Oude code (backup/magweg)
 1.
 --- Detecteren aantal stukken van een tiled (en niet scrambled) puzzel ---
@@ -178,4 +292,20 @@ if n_v == 10:
 #
 # cv2.imshow('image', image)
 # cv2.waitKey()
+
+3. # rect = cv2.minAreaRect(cnt)
+# angle = rect[2]
+# if angle < -45:
+#     angle = (90 + angle)
+# # otherwise, just take the inverse of the angle to make
+# # it positive
+# else:
+#     angle = -angle
+# # rotate the image to deskew it
+# (h, w) = pieces[0][0].shape[:2]
+# center = (w // 2, h // 2)
+# M = cv2.getRotationMatrix2D(center, angle, 1.0)
+# rotated = cv2.warpAffine(pieces[0][0], M, (w, h),
+#     flags=cv2.INTER_CUBIC, borderMode=cv2.BORDER_REPLICATE)
+
 """
