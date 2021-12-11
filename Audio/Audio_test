@@ -53,7 +53,10 @@ class Audio(threading.Thread):
         aantal_noten = len(audio.notes)
         base_maj_freq = Audio.frequenties(audio.notes[0])
         for i in range(aantal_noten):
-            f = Audio.frequenties(audio.notes[i])
+            if audio.notes[i] == 'W':
+                pass
+            else:
+                f = Audio.frequenties(audio.notes[i])
             s = f / base_maj_freq
             _, yt = Audio.karplus_strong_met_uitrekken(f, fs, time, s)
             c_maj.extend(yt)
@@ -88,7 +91,7 @@ class Audio(threading.Thread):
 fail_notes = ['C3', 'F3', 'F3', 'F3', 'E3', 'D3', 'C3', 'G2', 'G2', 'C2']
 victory_notes = ['G2', 'C3', 'E3', 'G3', 'C4', 'E4', 'G4', 'E4','G#2', 'C3', 'D#3', 'G#3', 'C4', 'D#4', 'G#4', 'D#4',
                  'A#2', 'D3', 'F3', 'A#3', 'D4', 'F4', 'A#4', 'A#4','A#4','C5']
-wait_notes = ['E4','E4','C4', 'A3', 'A3', 'D4', 'D4', 'D4', 'F#4', 'F#4', 'G4', 'A4', 'G4', 'G4','G4', 'D4', 'C4', 'E4',
+wait_notes = ['E4','E4','C4', 'A3','W', 'A3','W', 'D4', 'W', 'D4', 'W', 'D4', 'F#4', 'F#4', 'G4', 'A4', 'W', 'G4', 'G4','G4', 'D4', 'C4', 'E4',
               'E4', 'E4','D4', 'D4', 'E4', 'D4','E4','E4','C4', 'A3', 'A3', 'D4', 'D4', 'D4', 'F#4', 'F#4', 'G4', 'A4',
               'G4', 'G4','G4', 'D4', 'C4', 'E4','E4', 'E4','D4', 'D4', 'E4', 'D4']
 #test_notes = ['G3', 'G3', 'G3', 'B3', 'E4', 'E4', 'E4', 'D4', 'B3', 'B3', 'B3', 'B3', 'F#3', 'F#3', 'F#3']
@@ -102,8 +105,8 @@ wait_audio = Audio(wait_notes)
 #Audio.printnotes(fail)
 
 #--Muziek afspelen--
-Audio.puzzel_sound_play(fail_audio)
-Audio.puzzel_sound_play(victory_audio, 0.2)
-# Audio.playvictory() #Hardgecodeerde versie
+#Audio.puzzel_sound_play(fail_audio)
+#Audio.puzzel_sound_play(victory_audio, 0.2)
+#Audio.playvictory() #Hardgecodeerde versie
 Audio.puzzel_sound_play(wait_audio, 0.3)
-Audio.puzzel_sound_play(test_audio, 0.4)
+#Audio.puzzel_sound_play(test_audio, 0.4)
