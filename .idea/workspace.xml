@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="BranchesTreeState">
     <expand>
       <path>
@@ -42,10 +45,11 @@
   </component>
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.OpenProjectViewOnStart" value="true" />
-    <property name="last_opened_file_path" value="D:/Mijn Documenten/Unief/MASTER/SEM1/Multimedia/Labo" />
+    <property name="last_opened_file_path" value="D:/Mijn Documenten/Unief/MASTER/SEM1/Multimedia/Labo/Labo6/upy-rtttl-master" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.Scrambled_tile_detection_PREP">
-    <configuration name="Audio_voorbereiding_MAGWEG" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+  <component name="RunManager" selected="Python.labo6Tom">
+    <configuration name="Audio_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Multimedia_project" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -53,11 +57,11 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Documentatie" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Audio" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\Users\Han Van Bladel\Documents\GitHub\Multimedia_project\Documentatie\Audio_voorbereiding_MAGWEG.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Audio/Audio_test" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -94,12 +98,33 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="C:\Users\Han Van Bladel\AppData\Local\Programs\Python\Python38-32\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Audio" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Audio/base.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="labo6Tom" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="Multimedia_project" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="D:/Mijn Documenten/Unief/MASTER/SEM1/Multimedia/Labo/Labo6" />
+      <option name="IS_MODULE_SDK" value="false" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="D:/Mijn Documenten/Unief/MASTER/SEM1/Multimedia/Labo/Labo6/labo6Tom.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -115,9 +140,9 @@
       <envs>
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
-      <option name="SDK_HOME" value="" />
+      <option name="SDK_HOME" value="C:\Users\Han Van Bladel\AppData\Local\Programs\Python\Python39\python.exe" />
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
+      <option name="IS_MODULE_SDK" value="false" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
@@ -129,12 +154,20 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
+    <list>
+      <item itemvalue="Python.Audio_test" />
+      <item itemvalue="Python.Scrambled_tile_detection_PREP" />
+      <item itemvalue="Python.base" />
+      <item itemvalue="Python.labo6Tom" />
+      <item itemvalue="Python.main" />
+    </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.Scrambled_tile_detection_PREP" />
-        <item itemvalue="Python.base" />
+        <item itemvalue="Python.labo6Tom" />
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.Audio_voorbereiding_MAGWEG" />
+        <item itemvalue="Python.base" />
+        <item itemvalue="Python.Audio_test" />
+        <item itemvalue="Python.Scrambled_tile_detection_PREP" />
       </list>
     </recent_temporary>
   </component>
@@ -162,39 +195,49 @@
     <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1638271848997">
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1639219092621">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1638271848997" />
-    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1636901501035">
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1639219092621" />
+    <state x="223" y="67" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1536.824@0.0.1536.824" timestamp="1639051902287" />
+    <state x="524" y="214" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1639218560790">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
-    <state x="549" y="167" key="FileChooserDialogImpl/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1636901501035" />
+    <state x="524" y="214" key="#com.intellij.fileTypes.FileTypeChooser/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1639218560790" />
+    <state x="549" y="167" key="FileChooserDialogImpl" timestamp="1639240699497">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="549" y="167" key="FileChooserDialogImpl/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1639240699497" />
     <state x="549" y="167" key="FileChooserDialogImpl/0.0.1536.824@0.0.1536.824" timestamp="1636723645564" />
-    <state width="1515" height="232" key="GridCell.Tab.0.bottom" timestamp="1638543945331">
+    <state width="1515" height="101" key="GridCell.Tab.0.bottom" timestamp="1639240365803">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="282" key="GridCell.Tab.0.bottom/-1920.0.1920.1030/0.0.1536.824@-1920.0.1920.1030" timestamp="1637180751381" />
-    <state width="1515" height="232" key="GridCell.Tab.0.bottom/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1638543945331" />
-    <state width="1515" height="232" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1638273143475" />
-    <state width="1515" height="232" key="GridCell.Tab.0.center" timestamp="1638543945331">
+    <state width="1515" height="101" key="GridCell.Tab.0.bottom/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1639240365803" />
+    <state width="1515" height="304" key="GridCell.Tab.0.bottom/0.0.1536.824@0.0.1536.824" timestamp="1639054771535" />
+    <state width="1515" height="101" key="GridCell.Tab.0.center" timestamp="1639240365803">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="282" key="GridCell.Tab.0.center/-1920.0.1920.1030/0.0.1536.824@-1920.0.1920.1030" timestamp="1637180751381" />
-    <state width="1515" height="232" key="GridCell.Tab.0.center/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1638543945331" />
-    <state width="1515" height="232" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1638273143475" />
-    <state width="1515" height="232" key="GridCell.Tab.0.left" timestamp="1638543945331">
+    <state width="1515" height="101" key="GridCell.Tab.0.center/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1639240365803" />
+    <state width="1515" height="304" key="GridCell.Tab.0.center/0.0.1536.824@0.0.1536.824" timestamp="1639054771527" />
+    <state width="1515" height="101" key="GridCell.Tab.0.left" timestamp="1639240365803">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="282" key="GridCell.Tab.0.left/-1920.0.1920.1030/0.0.1536.824@-1920.0.1920.1030" timestamp="1637180751381" />
-    <state width="1515" height="232" key="GridCell.Tab.0.left/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1638543945331" />
-    <state width="1515" height="232" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1638273143475" />
-    <state width="1515" height="232" key="GridCell.Tab.0.right" timestamp="1638543945331">
+    <state width="1515" height="101" key="GridCell.Tab.0.left/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1639240365803" />
+    <state width="1515" height="304" key="GridCell.Tab.0.left/0.0.1536.824@0.0.1536.824" timestamp="1639054771527" />
+    <state width="1515" height="101" key="GridCell.Tab.0.right" timestamp="1639240365803">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
     <state width="1899" height="282" key="GridCell.Tab.0.right/-1920.0.1920.1030/0.0.1536.824@-1920.0.1920.1030" timestamp="1637180751381" />
-    <state width="1515" height="232" key="GridCell.Tab.0.right/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1638543945331" />
-    <state width="1515" height="232" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1638273143475" />
+    <state width="1515" height="101" key="GridCell.Tab.0.right/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1639240365803" />
+    <state width="1515" height="304" key="GridCell.Tab.0.right/0.0.1536.824@0.0.1536.824" timestamp="1639054771527" />
+    <state x="48" y="57" width="1488" height="710" key="SettingsEditor" timestamp="1639218085747">
+      <screen x="0" y="0" width="1536" height="824" />
+    </state>
+    <state x="48" y="57" width="1488" height="710" key="SettingsEditor/-1920.0.1920.1030/0.0.1536.824@0.0.1536.824" timestamp="1639218085747" />
+    <state x="277" y="57" key="SettingsEditor/0.0.1536.824@0.0.1536.824" timestamp="1639051955078" />
     <state x="586" y="326" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1636723867297">
       <screen x="0" y="0" width="1536" height="824" />
     </state>
