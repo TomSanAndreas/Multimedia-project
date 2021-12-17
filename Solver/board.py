@@ -8,6 +8,7 @@ from time import time
 from Solver.piece import *
 from Solver.types import Types
 from Solver.utils import *
+from Solver.scrambled_splitter import knip_tegels
 
 class Board:
     def __init__(self, pieces: list['Piece'], shape: tuple[int, int]):
@@ -375,13 +376,11 @@ class Board:
                 n_h, n_v = puzzle_dims[0], puzzle_dims[1]
                 return Board([TiledPiece(img[v_size * y:v_size * (y + 1), h_size * x:h_size * (x + 1)]) for y in range(n_v) for x in range(n_h)], (n_h, n_v))
             else:
-                # De stukken liggen verspreid op het beeld, met
-                # zwartruimtes tussen.
-                # TODO
-                raise NotImplementedError()
+                pieces = knip_tegels(img, puzzle_dims)
+                print(f"Gegeven dimensions: {puzzle_dims[0]} x {puzzle_dims[1]}")
+                return Board([TiledPiece(piece) for piece in pieces], puzzle_dims)
         else:
             # pieces zijn van type Jigsaw
             # Kijken indien het om een rotated board gaat of niet
-            # TODO
-            raise NotImplementedError()
+            raise NotImplementedError("Jigsaw puzzles zijn niet ondersteund.")
         return Board([], (0, 0))

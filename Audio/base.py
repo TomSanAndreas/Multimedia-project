@@ -8,6 +8,27 @@ class Audio(threading.Thread):
         super(Audio, self).__init__()
         self.notes = notes
 
+    def play(self, time: float = .25, fs: int = 8000) -> None:
+        self.time = time
+        self.fs = fs
+        self.start()
+
+    def run(self):
+        c_maj = []
+        aantal_noten = len(self.notes)
+        base_maj_freq = Audio.frequenties(self.notes[0])
+        for i in range(aantal_noten):
+            f = Audio.frequenties(self.notes[i])
+            s = f / base_maj_freq
+            _, yt = Audio.karplus_strong_met_uitrekken(f, self.fs, self.time, s)
+            c_maj.extend(yt)
+        # resultaat opslaan indien nodig
+        # Write(c_maj, fs, "Fail")
+        # resultaat afspelen
+        Audio.speel_af(c_maj, self.fs)
+
+
+    @staticmethod
     def speel_af(sample, rate):
         # Ensure that highest value is in 16-bit range
         audio = sample/np.max(np.abs(sample))
@@ -18,7 +39,8 @@ class Audio(threading.Thread):
         play_obj = sa.play_buffer(audio, 1, 2, rate)
         # Wait for playback to finish before exiting
         play_obj.wait_done()
-
+    
+    @staticmethod
     def frequenties(note: str = "C1", print_debug: bool = False) -> float:
         base_freq = 32.703
         noten = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
@@ -36,6 +58,7 @@ class Audio(threading.Thread):
                 f"Note \"{note}\" -> octave {octave + 1} ; index {index} ; freq {base_freq * 2 ** (index / 12 + octave)}")
         return base_freq * 2 ** (index / 12 + octave)
 
+    @staticmethod
     def karplus_strong_met_uitrekken(f: int, fs: int, time: float, s: int) -> tuple:
         # bepalen van aantal elementen p afh van f en fs
         p = int(fs / f - .5)
@@ -47,24 +70,9 @@ class Audio(threading.Thread):
             yt.append(yt[i] if r.random() < prob else (yt[i] + yt[i + 1]) / 2)
         return yt[:p], yt[p + 1:]
 
-    @staticmethod
-    def puzzel_sound_play(audio, time: float = .25, fs: int = 8000) -> None:
-        c_maj = []
-        aantal_noten = len(audio.notes)
-        base_maj_freq = Audio.frequenties(audio.notes[0])
-        for i in range(aantal_noten):
-            f = Audio.frequenties(audio.notes[i])
-            s = f / base_maj_freq
-            _, yt = Audio.karplus_strong_met_uitrekken(f, fs, time, s)
-            c_maj.extend(yt)
-        # resultaat opslaan indien nodig
-        # Write(c_maj, fs, "Fail")
-        # resultaat afspelen
-        Audio.speel_af(c_maj, fs)
-
     #onnodige testfunctie
     @staticmethod
-    def printnotes(self):
+    def print_notes(self):
         print(self.notes)
 
     # def playvictory(time: float = .2, fs: int = 8000) -> None:
@@ -94,16 +102,18 @@ wait_notes = ['E4','E4','C4', 'A3', 'A3', 'D4', 'D4', 'D4', 'F#4', 'F#4', 'G4', 
 #test_notes = ['G3', 'G3', 'G3', 'B3', 'E4', 'E4', 'E4', 'D4', 'B3', 'B3', 'B3', 'B3', 'F#3', 'F#3', 'F#3']
 
 
-#--Audio-object aanmaken--
-fail_audio = Audio(fail_notes)
-victory_audio = Audio(victory_notes)
-wait_audio = Audio(wait_notes)
-#test_audio = Audio(test_notes)
-#Audio.printnotes(fail)
+# TESTCODE
 
-#--Muziek afspelen--
-Audio.puzzel_sound_play(fail_audio)
-Audio.puzzel_sound_play(victory_audio, 0.2)
-# Audio.playvictory() #Hardgecodeerde versie
-Audio.puzzel_sound_play(wait_audio, 0.3)
-Audio.puzzel_sound_play(test_audio, 0.4)
+# #--Audio-object aanmaken--
+# fail_audio = Audio(fail_notes)
+# victory_audio = Audio(victory_notes)
+# wait_audio = Audio(wait_notes)
+# #test_audio = Audio(test_notes)
+# #Audio.printnotes(fail)
+
+# #--Muziek afspelen--
+# Audio.puzzel_sound_play(fail_audio)
+# Audio.puzzel_sound_play(victory_audio, 0.2)
+# # Audio.playvictory() #Hardgecodeerde versie
+# Audio.puzzel_sound_play(wait_audio, 0.3)
+# Audio.puzzel_sound_play(test_audio, 0.4)
