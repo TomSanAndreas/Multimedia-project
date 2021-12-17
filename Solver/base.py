@@ -17,7 +17,10 @@ class Solver(threading.Thread):
         self.is_ready = False
         self.start()
     def run(self):
-        self.solved = self.board.solve()
+        try:
+            self.solved = self.board.solve()
+        except:
+            self.solved = False
         self.is_ready = True
     def show(self):
         result = self.board.create_image()

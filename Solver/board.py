@@ -309,14 +309,15 @@ class Board:
         Creeert een afbeelding met de stukken op de
         ingestelde posities en geeft deze terug
         """
-        # Indien er child board zijn, moeten deze images eerst gemaakt worden, en worden
-        # deze gematched
-        result = np.concatenate([self.pieces[i].img for i in self.orientation[0]], axis=1)
-        black = np.zeros(self.pieces[0].img.shape, dtype=np.uint8)
-        for row in self.orientation[1:]:
-            result_row = np.concatenate([self.pieces[i].img if i != -1 else black for i in row], axis=1)
-            result = np.concatenate((result, result_row))
-        return result
+        try:
+            result = np.concatenate([self.pieces[i].img for i in self.orientation[0]], axis=1)
+            black = np.zeros(self.pieces[0].img.shape, dtype=np.uint8)
+            for row in self.orientation[1:]:
+                result_row = np.concatenate([self.pieces[i].img if i != -1 else black for i in row], axis=1)
+                result = np.concatenate((result, result_row))
+            return result
+        except:
+            return np.zeros(self.shape)
 
     @staticmethod
     def create_board(img, puzzle_type: int, puzzle_dims: tuple[int, int] = None):

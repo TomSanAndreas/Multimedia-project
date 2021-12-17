@@ -57,7 +57,6 @@ def knip_tegels(image: np.ndarray, dimensions: tuple[int, int]) -> list[np.ndarr
         for j in range(aantal_h):
             pieceno = pieceno+1
             pieces[i][j] = image[(i*b):((i+1)*b), (j*l):((j+1)*l)]
-            cv2.imshow(f"yoink1 {pieceno}", pieces[i][j])
             #afmetingen controleren
             pieces_res[i][j] = crop_rect_help(pieces[i][j])
     # stukken flattenen naar 1 lange lijst
