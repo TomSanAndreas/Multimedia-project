@@ -48,7 +48,7 @@
     <property name="last_opened_file_path" value="D:/Mijn Documenten/Unief/MASTER/SEM1/Multimedia/Labo/Labo6/upy-rtttl-master" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
-  <component name="RunManager" selected="Python.labo6Tom">
+  <component name="RunManager" selected="Python.main">
     <configuration name="Audio_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="Multimedia_project" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -163,8 +163,8 @@
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.labo6Tom" />
         <item itemvalue="Python.main" />
+        <item itemvalue="Python.labo6Tom" />
         <item itemvalue="Python.base" />
         <item itemvalue="Python.Audio_test" />
         <item itemvalue="Python.Scrambled_tile_detection_PREP" />
