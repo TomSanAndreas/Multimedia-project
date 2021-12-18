@@ -74,7 +74,7 @@ class TiledPiece(Piece):
     def __init__(self, img: np.ndarray, rot: int = 0, relations: 'list[tuple[float, TiledPiece]]' = None):
         super(TiledPiece, self).__init__(img, rot, relations)
 
-    def match_all(self, other: 'TiledPiece', accuracy: int = 10, max_offset: tuple[int, int] = (-2, 2)) -> dict:
+    def match_all(self, other: 'TiledPiece', accuracy: int = 10, max_offset: tuple[int, int] = (-2, 2), row_offset: int = 0) -> dict:
         """
         Geeft scores in de vorm van een dict
         terug die aanduidt wat de gelijkaardigheid
@@ -98,17 +98,17 @@ class TiledPiece(Piece):
             # zowel dit stuk als het andere stuk
             # proberen en teruggeven
             for i in range(4):
-                result[i] = self.match(other, accuracy, max_offset)
+                result[i] = self.match(other, accuracy, max_offset, row_offset)
                 other = other.rotate()
         else:
             # Rechthoekige stukken, 2 oriëntaties
             # proberen in de plaats
             for i in range(2):
-                result[2 * i] = self.match(other, accuracy, max_offset)
+                result[2 * i] = self.match(other, accuracy, max_offset, row_offset)
                 other = other.rotate_n(2)
         return result
     
-    def match(self, other: 'TiledPiece', accuracy: int, max_offset: tuple[int, int]) -> dict:
+    def match(self, other: 'TiledPiece', accuracy: int, max_offset: tuple[int, int], row_offset: int = 0) -> dict:
         """
         Geeft scores in de vorm van een dict
         terug die aanduidt wat de gelijkaardigheid
@@ -124,14 +124,14 @@ class TiledPiece(Piece):
         result = {}
         if self.img.shape[0] == other.img.shape[0]:
             # links matchen met de rechterkant van other
-            result["left"] = self.calc_score(self.img[:, 0], other.img[:, -1], abs_threshold = accuracy, max_offset = max_offset)
+            result["left"] = self.calc_score(self.img[:, row_offset], other.img[:, -1 - row_offset], abs_threshold = accuracy, max_offset = max_offset)
             # rechts matchen met de linkerkant van other
-            result["right"] = self.calc_score(self.img[:, -1], other.img[:, 0], abs_threshold = accuracy, max_offset = max_offset)
+            result["right"] = self.calc_score(self.img[:, -1 - row_offset], other.img[:, row_offset], abs_threshold = accuracy, max_offset = max_offset)
         if self.img.shape[1] == other.img.shape[1]:
             # boven matchen met de onderkant van other
-            result["top"] = self.calc_score(self.img[0, :], other.img[-1, :], abs_threshold = accuracy, max_offset = max_offset)
+            result["top"] = self.calc_score(self.img[row_offset, :], other.img[-1 - row_offset, :], abs_threshold = accuracy, max_offset = max_offset)
             # onder matchen met de bovenkant van other
-            result["bottom"] = self.calc_score(self.img[-1, :], other.img[0, :], abs_threshold = accuracy, max_offset = max_offset)
+            result["bottom"] = self.calc_score(self.img[-1 - row_offset, :], other.img[row_offset, :], abs_threshold = accuracy, max_offset = max_offset)
         return result
 
     def rotate(self) -> "TiledPiece":

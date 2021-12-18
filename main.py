@@ -1,5 +1,6 @@
 # Algemene imports
 import cv2
+from time import sleep
 
 # Eigen imports
 from Solver.base import Solver
@@ -22,17 +23,27 @@ if __name__ == "__main__":
         src_image = cv2.imread(filename)
         solver = Solver(src_image, type_puzzle)
         solver.solve()
-        while not solver.is_ready:
-            wait_tone = Audio(wait_notes)
-            wait_tone.play(time = 0.2)
-            wait_tone.join()
+        try:
+            while not solver.is_ready:
+                wait_tone = Audio(wait_notes)
+                wait_tone.play(time = 0.2)
+                while wait_tone.is_playing and not solver.is_ready:
+                    sleep(0.2)
+                if solver.is_ready:
+                    wait_tone.stop()
+                wait_tone.join()
+        except KeyboardInterrupt:
+            print("\033[2A\033[1m=> Stopsignaal ontvangen. Laatste iteratie afwerken...\033[0m\n")
+            solver.force_stop()
+            try:
+                wait_tone.stop()
+                wait_tone.join()
+            except:
+                # de wachttoon werd niet gestart, mag genegeerd worden
+                pass
         solver.join()
+        wait_tone.stop()
+        end_tone = Audio(victory_notes if solver.solved else fail_notes)
+        end_tone.play(time = 0.2 if solver.solved else 0.25)
         solver.show()
-        if solver.solved:
-            success_tone = Audio(victory_notes)
-            success_tone.play(time = 0.2)
-            success_tone.join()
-        else:
-            fail_tone = Audio(fail_notes)
-            fail_tone.play()
-            fail_tone.join()
+        end_tone.join()

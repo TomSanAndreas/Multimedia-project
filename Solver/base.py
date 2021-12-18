@@ -13,16 +13,18 @@ class Solver(threading.Thread):
         self.board = Board.create_board(source_image, self.puzzle_type, puzzle_properties[1])
         self.board.show()
         self.solved = False
-    def solve(self):
+    def solve(self) -> None:
         self.is_ready = False
         self.start()
-    def run(self):
+    def force_stop(self) -> None:
+        self.board.halt = True
+    def run(self) -> None:
         try:
             self.solved = self.board.solve()
         except:
             self.solved = False
         self.is_ready = True
-    def show(self):
+    def show(self) -> None:
         result = self.board.create_image()
         show_image(result)
         self.board.show()

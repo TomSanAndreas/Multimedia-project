@@ -11,7 +11,7 @@ from Solver.utils import *
 from Solver.scrambled_splitter import knip_tegels
 
 class Board:
-    def __init__(self, pieces: list['Piece'], shape: tuple[int, int]):
+    def __init__(self, pieces: list['Piece'], shape: tuple[int, int], edge_offset: int = 0):
         # alle gebruikte stukken van dit bord bijgehouden in een lijst
         self.pieces = pieces
         # aantal stukken horizontaal, verticaal
@@ -22,8 +22,12 @@ class Board:
         self.threshold = 5
         # initiele waarde, gebruikt bij het oplossen van de puzzel
         self.max_pixel_offset = (-2, 2)
+        # gegeven waarde, gebruikt bij het oplossen van de puzzel
+        self.edge_offset = edge_offset
         # vlag die bijhoudt wat de kleuren van de foto zijn (zwart/wit of rgb)
         self.is_rgb = len(pieces[0].img.shape) == 3 and not ((pieces[0].img[:,:,0] == pieces[0].img[:,:,1]) & (pieces[0].img[:, :, 1] == pieces[0].img[:, :, 2])).all()
+        # vlag die bijhoudt indien het bord moet stoppen met oplossen (interrupt)
+        self.halt = False
 
     def show(self) -> None:
         fig = plt.figure()
@@ -55,6 +59,10 @@ class Board:
         index = 1
         attempts = 0
         for param in params:
+            # stoppen met oplossen indien gewenst
+            if self.halt:
+                print(f"\033[1m=> Oplossen is stopgezet\033[0m")
+                break
             # beginnen met oplossen
             print(f"\033[1m=> Oplossen... (configuratie {index} van {len(params)})\033[0m")
             success, attempts, solution = self.bulk_solve(param[0], param[1], attempts)
@@ -92,26 +100,30 @@ class Board:
         # structuur: aantal opgeloste stukken, positie van elk stuk (self.orientation) en een kopie van elk stuk
         # met de juiste rotatie
         best_solution = (0, [], [])
-        while self.threshold != threshold_range[1]:
+        while self.threshold != threshold_range[1] and not self.halt:
             current_attempt += 1
             # huidige status weergeven
             print(f"Poging {current_attempt:2}/{n_attempts}: Actief" + (" " * 20))
             start_time = time()
             # elk stuk resetten voor het zekerste
             self.pieces = [p.rotate_to(0) for p in self.pieces]
-            success, result = self.try_solve()
-            if success:
-                best_solution = (self.shape[0] * self.shape[1], result, [p for p in self.pieces])
-                # go a line back and update the header, with extra newline so status remains visible
-                print(f"\033[1APoging {current_attempt:2}/{n_attempts}: \033[92mGelukt na {(time() - start_time):2.1f}s!\033[0m" + (" " * 20), end='\n')
-                return True, current_attempt, best_solution
-            # indien beter dan vorige resultaten, deze bijhouden
-            n_ingevuld = len([1 for row in result for el in row if el != -1])
-            if n_ingevuld > best_solution[0]:
-                best_solution = (n_ingevuld, result, [p for p in self.pieces])
-            # niet succesvol, threshold aanpassen en opnieuw proberen
-            # go a line back and update the status
-            print(f"\033[1APoging {current_attempt:2}/{n_attempts}: \033[91mGefaald na {(time() - start_time):2.1f}s!\033[0m" + (" " * 20))
+            try:
+                success, result = self.try_solve()
+                if success:
+                    best_solution = (self.shape[0] * self.shape[1], result, [p for p in self.pieces])
+                    # go a line back and update the header, with extra newline so status remains visible
+                    print(f"\033[1APoging {current_attempt:2}/{n_attempts}: \033[92mGelukt na {(time() - start_time):2.1f}s!\033[0m" + (" " * 20), end='\n')
+                    return True, current_attempt, best_solution
+                # indien beter dan vorige resultaten, deze bijhouden
+                n_ingevuld = len([1 for row in result for el in row if el != -1])
+                if n_ingevuld > best_solution[0]:
+                    best_solution = (n_ingevuld, result, [p for p in self.pieces])
+                # niet succesvol, threshold aanpassen en opnieuw proberen
+                # go a line back and update the status
+                print(f"\033[1APoging {current_attempt:2}/{n_attempts}: \033[91mGefaald na {(time() - start_time):2.1f}s!\033[0m" + (" " * 20))
+            except:
+                # Ergens liep het fout, waarschijnlijk door de gebruikte stukken
+                print(f"\033[1APoging {current_attempt:2}/{n_attempts}: \033[91mInterne fout na {(time() - start_time):2.1f}s!\033[0m" + (" " * 20))
             # opnieuw proberen
             self.threshold += dt
         return False, current_attempt, best_solution
@@ -240,9 +252,8 @@ class Board:
         # hoogste kans gebruiken voor het aantal rotaties vast te leggen     
         n_rotations = n_rotations_h if certainty_h > certainty_v else n_rotations_v
         self.pieces[last_piece] = self.pieces[last_piece].rotate_to(n_rotations)
-        print()
         n_elements = self.shape[0] * 4
-        print("+" + "-" * n_elements + "+")
+        print("\n+" + "-" * n_elements + "+")
         for row in result:
             print('|', end='')
             for el in row:
@@ -290,7 +301,7 @@ class Board:
             scores.append({j: [0, None, None] for j in positions})
             if i in matched_indices:
                 for j in to_be_matched_indices - {i}:
-                    matches = self.pieces[i].match_all(self.pieces[j], self.threshold, self.max_pixel_offset)
+                    matches = self.pieces[i].match_all(self.pieces[j], self.threshold, self.max_pixel_offset, self.edge_offset)
                     # enkel maxima overhouden, zodat er makkelijker gekeken kan worden naar het aantal buren
                     current_score = {x: max([[matches[y][x], j, y] for y in matches], key=lambda z: z[0]) for x in positions}
                     scores[-1] = {x: max((scores[y][x], current_score[x]), key=lambda x: x[0]) for y in range(len(scores)) for x in positions}
@@ -379,7 +390,60 @@ class Board:
             else:
                 pieces = knip_tegels(img, puzzle_dims)
                 print(f"Gegeven dimensions: {puzzle_dims[0]} x {puzzle_dims[1]}")
-                return Board([TiledPiece(piece) for piece in pieces], puzzle_dims)
+                # de randen worden visueel geboost
+                # dit levert ook betere matching op aangezien de spreidingen tussen
+                # de rgb waardes extremer worden zo
+                # de shape informatie wordt ook in rekening gebracht om zo een minimale shape over
+                # te houden, en dan elk stuk eenzelfde vorm mee te geven
+                min_shape = [pieces[0].shape[0], pieces[0].shape[1]]
+                # tuple omzetten naar lijst zodat deze kan gewijzigd worden in de loop
+                # deze lijst wordt ook gesorteerd, voor zo gemakkelijker de kleinste
+                # van eender welke richting bij te houden
+                min_shape.sort()
+                for piece in pieces:
+                    piece[:, 0] = np.array(np.clip(1.25 * piece[:, 0], 0, 255), dtype=np.uint8)
+                    piece[:, -1] = np.array(np.clip(1.25 * piece[:, -1], 0, 255), dtype=np.uint8)
+                    piece[0, :] = np.array(np.clip(1.25 * piece[0, :], 0, 255), dtype=np.uint8)
+                    piece[-1, :] = np.array(np.clip(1.25 * piece[-1, :], 0, 255), dtype=np.uint8)
+                    # shape updaten indien nodig
+                    shape_1, shape_2 = sorted(piece.shape[0:2])
+                    if shape_2 < min_shape[0]:
+                        min_shape = [shape_1, shape_2]
+                    else:
+                        if shape_2 < min_shape[1]:
+                            min_shape[1] = shape_2
+                        if shape_1 < min_shape[0]:
+                            min_shape[0] = shape_1
+                    # elif shape_1 > min_shape[1] <- in dit geval moet er niets worden aangepast
+                # met de kennis van de minimale shape kan elk stuk nu gesneden en eventueel gedraaid
+                # worden
+                for i in range(len(pieces)):
+                    shape_1, shape_2 = pieces[i].shape[0:2]
+                    if shape_1 > shape_2:
+                        # stuk moet gedraaid worden
+                        pieces[i] = cv2.rotate(pieces[i], cv2.ROTATE_90_CLOCKWISE)
+                        # shape draait zich dan ook om
+                        shape_1, shape_2 = pieces[i].shape[0:2]
+                    # het aantal pixels dat er teveel zitten in shape inkrimpen
+                    # dit inkrimpen gebeurt aan de kant met de kleinste totale
+                    # pixelwaarde voor die rij/kolom
+                    n_horizontaal = shape_1 - min_shape[0]
+                    for _ in range(n_horizontaal):
+                        # kijken naar kleinste rij qua pixelwaarde (1 of 0)
+                        bound1, bound2 = (0, shape_1 - 1) if np.sum(pieces[i][0,:]) > np.sum(pieces[i][-1, :]) else (1, shape_1)
+                        # deze index inkrimpen
+                        pieces[i] = pieces[i][bound1:bound2, :, :]
+                        shape_1 -= 1
+                    n_verticaal = shape_2 - min_shape[1]
+                    for _ in range(n_verticaal):
+                        # kijken naar kleinste rij qua pixelwaarde (1 of 0)
+                        bound1, bound2 = (0, shape_2 - 1) if np.sum(pieces[i][:,0]) > np.sum(pieces[i][:,-1]) else (1, shape_2)
+                        # deze index inkrimpen
+                        pieces[i] = pieces[i][:, bound1:bound2, :]
+                        shape_2 -= 1
+                # de stukken gebruiken om er tiledpieces van te maken en een bord
+                # mee te vormen
+                return Board([TiledPiece(piece) for piece in pieces], puzzle_dims, edge_offset=1)
         else:
             # pieces zijn van type Jigsaw
             # Kijken indien het om een rotated board gaat of niet

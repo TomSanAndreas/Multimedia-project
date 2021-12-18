@@ -8,10 +8,6 @@ class Types:
     GUESS = 99
 
     @staticmethod
-    def convert_input_to_type(desc: str) -> int:
-        return Types.GUESS
-
-    @staticmethod
     def is_tiled(t: int) -> bool:
         return t == Types.TILES_ROTATED or t == Types.TILES_SCRAMBLED or t == Types.TILES_SHUFFLED
     
