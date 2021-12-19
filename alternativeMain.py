@@ -1,3 +1,4 @@
+#Alternatieve main zonder audio
 # Algemene imports
 import cv2
 from time import sleep
