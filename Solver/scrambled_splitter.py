@@ -43,15 +43,14 @@ def crop_rect_help(image):
 
 def knip_tegels(image: np.ndarray, dimensions: tuple[int, int]) -> list[np.ndarray]:
     # ---Figuur inlezen + aantal stukken en parameters bepalen (VIA PARAMETERS)---
-    aantal_h = dimensions[1]
-    aantal_v = dimensions[0]
+    aantal_h, aantal_v = dimensions
 
     #---stukken splitsen---
     pieces = [[None for _ in range(aantal_h)] for _ in range(aantal_v)]
     pieces_res = [[None for _ in range(aantal_h)] for _ in range(aantal_v)]
 
-    b = int(image.shape[0]/aantal_h)
-    l = int(image.shape[1]/aantal_v)
+    b = int(image.shape[0]/aantal_v)
+    l = int(image.shape[1]/aantal_h)
     pieceno = 0
     for i in range(aantal_v):
         for j in range(aantal_h):

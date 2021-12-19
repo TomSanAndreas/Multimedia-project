@@ -61,7 +61,7 @@ class Board:
         for param in params:
             # stoppen met oplossen indien gewenst
             if self.halt:
-                print(f"\033[1m=> Oplossen is stopgezet\033[0m")
+                print(f"\033[1m=> Oplossen is stopgezet\033[0m" + (" " * 20))
                 break
             # beginnen met oplossen
             print(f"\033[1m=> Oplossen... (configuratie {index} van {len(params)})\033[0m")
@@ -441,6 +441,9 @@ class Board:
                         # deze index inkrimpen
                         pieces[i] = pieces[i][:, bound1:bound2, :]
                         shape_2 -= 1
+                # elk stuk nog 1x draaien, zodat de stukken, indien rechthoeken, rechtop staan
+                for i, piece in enumerate(pieces):
+                    pieces[i] = cv2.rotate(pieces[i], cv2.ROTATE_90_CLOCKWISE)
                 # de stukken gebruiken om er tiledpieces van te maken en een bord
                 # mee te vormen
                 return Board([TiledPiece(piece) for piece in pieces], puzzle_dims, edge_offset=1)
